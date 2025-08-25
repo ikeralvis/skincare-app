@@ -22,7 +22,7 @@ export const dailyRoutine = [
     accessCode: "BYOMA Moisturizing Gel Cream",
     function: "Sella los activos del sérum y crea una capa protectora. Mantiene la piel en un estado óptimo de hidratación.",
     usage: "Aplica una dosis (tamaño de una almendra) sobre el rostro y cuello. Masajea hasta su absorción.",
-    image: "/images/serumByoma.png"
+    image: "/images/cremaByoma.png"
   },
   {
     step: 4,
