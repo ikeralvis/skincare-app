@@ -1,0 +1,154 @@
+---
+import { dailyRoutine, weeklyRoutine } from '../data/routines';
+
+const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+// Formatear el día actual para que coincida con las claves de weeklyRoutine (ej: "Lunes")
+const todayFull = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
+const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1);
+const initialNightRoutine = weeklyRoutine[capitalizedToday as keyof typeof weeklyRoutine];
+---
+
+<div class="calendar-container">
+  <div class="days-of-week">
+    {days.map(day => (
+      <button 
+        class={`day-button ${day === capitalizedToday ? 'active' : ''}`} 
+        data-day={day.toLowerCase()}
+      >
+        {day.slice(0, 1)}
+      </button>
+    ))}
+  </div>
+  <div class="daily-routine-display">
+    <div class="routine-section">
+      <h3 class="routine-title">PROTOCOLO DIURNO</h3>
+      <div class="product-list">
+        {dailyRoutine.map(product => (
+          <div class="calendar-product">
+            <img src={product.image} alt={product.accessCode} />
+            <p>{product.accessCode}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div class="routine-section">
+      <h3 class="routine-title">PROTOCOLO NOCTURNO</h3>
+      <div id="nightly-products" class="product-list">
+        {initialNightRoutine && initialNightRoutine.map(product => (
+          <div class="calendar-product">
+            <img src={product.image} alt={product.accessCode} />
+            <p>{product.accessCode}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .calendar-container {
+    padding-top: 2rem;
+  }
+  .days-of-week {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1.5rem;
+  }
+  .day-button {
+    background: none;
+    border: 2px solid #00ffff;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .day-button:hover {
+    background-color: rgba(0, 255, 255, 0.2);
+  }
+  .day-button.active {
+    background-color: #00ffff;
+    color: black;
+  }
+  .routine-section {
+    margin-bottom: 2rem;
+  }
+  .routine-title {
+    font-family: 'Phatt', sans-serif;
+    color: #00ffff;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .product-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .calendar-product {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  .calendar-product img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  .calendar-product p {
+    margin: 0;
+    font-size: 1rem;
+  }
+</style>
+
+<script is:inline>
+  const weeklyProducts = JSON.parse(JSON.stringify({
+    "Lunes": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Lactic Acid 5% + HA","image":"/images/latico.png"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
+    "Martes": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
+    "Miércoles": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Lactic Acid 5% + HA","image":"/images/latico.png"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
+    "Jueves": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
+    "Viernes": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Lactic Acid 5% + HA","image":"/images/latico.png"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
+    "Sábado": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
+    "Domingo": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}]
+  }));
+
+  const nightlyList = document.querySelector('#nightly-products');
+  const buttons = document.querySelectorAll('.day-button');
+
+  const getProductCardHTML = (product) => {
+    return `<div class="calendar-product">
+      <img src="${product.image}" alt="${product.accessCode}" />
+      <p>${product.accessCode}</p>
+    </div>`;
+  };
+
+  const renderNightlyRoutine = (day) => {
+    const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
+    const routine = weeklyProducts[capitalizedDay];
+    if (routine) {
+      nightlyList.innerHTML = '';
+      routine.forEach(product => {
+        nightlyList.innerHTML += getProductCardHTML(product);
+      });
+    }
+  };
+
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      buttons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      const day = button.dataset.day;
+      renderNightlyRoutine(day);
+    });
+  });
+</script>
