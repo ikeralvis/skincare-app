@@ -6,7 +6,6 @@ const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "
 // Formatear el día actual para que coincida con las claves de weeklyRoutine (ej: "Lunes")
 const todayFull = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
 const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1);
-const initialNightRoutine = weeklyRoutine[capitalizedToday as keyof typeof weeklyRoutine];
 ---
 
 <div class="calendar-container">
@@ -23,7 +22,7 @@ const initialNightRoutine = weeklyRoutine[capitalizedToday as keyof typeof weekl
   <div class="daily-routine-display">
     <div class="routine-section">
       <h3 class="routine-title">PROTOCOLO DIURNO</h3>
-      <div class="product-list">
+      <div class="routine-products-container">
         {dailyRoutine.map(product => (
           <div class="calendar-product">
             <img src={product.image} alt={product.accessCode} />
@@ -34,19 +33,32 @@ const initialNightRoutine = weeklyRoutine[capitalizedToday as keyof typeof weekl
     </div>
     <div class="routine-section">
       <h3 class="routine-title">PROTOCOLO NOCTURNO</h3>
-      <div id="nightly-products" class="product-list">
-        {initialNightRoutine && initialNightRoutine.map(product => (
-          <div class="calendar-product">
-            <img src={product.image} alt={product.accessCode} />
-            <p>{product.accessCode}</p>
-          </div>
-        ))}
+      <div class="nightly-routines-wrapper">
+        {days.map(day => {
+          const routine = weeklyRoutine[day as keyof typeof weeklyRoutine];
+          return (
+            <div 
+              id={`nightly-products-${day.toLowerCase()}`} 
+              class={`nightly-products-container ${day !== capitalizedToday ? 'ocultar' : ''}`}
+            >
+              {routine.map(product => (
+                <div class="calendar-product">
+                  <img src={product.image} alt={product.accessCode} />
+                  <p>{product.accessCode}</p>
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   </div>
 </div>
 
 <style>
+  .ocultar {
+    display: none !important;
+  }
   .calendar-container {
     padding-top: 2rem;
   }
@@ -84,7 +96,7 @@ const initialNightRoutine = weeklyRoutine[capitalizedToday as keyof typeof weekl
     margin-bottom: 1rem;
     text-align: center;
   }
-  .product-list {
+  .nightly-products-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -112,43 +124,28 @@ const initialNightRoutine = weeklyRoutine[capitalizedToday as keyof typeof weekl
 </style>
 
 <script is:inline>
-  const weeklyProducts = JSON.parse(JSON.stringify({
-    "Lunes": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Lactic Acid 5% + HA","image":"/images/latico.png"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
-    "Martes": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
-    "Miércoles": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Lactic Acid 5% + HA","image":"/images/latico.png"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
-    "Jueves": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
-    "Viernes": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Lactic Acid 5% + HA","image":"/images/latico.png"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
-    "Sábado": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}],
-    "Domingo": [{"accessCode":"BYOMA Creamy Jelly Cleanser","image":"/images/limpiador.png"},{"accessCode":"The Ordinary Hyaluronic Acid 2% + B5","image":"/images/ordinary_hialuronico.webp"},{"accessCode":"The Ordinary Natural Moisturizing Factors + HA","image":"/images/crema_ordinary.webp"}]
-  }));
+  document.addEventListener('DOMContentLoaded', () => {
+    const buttons = document.querySelectorAll('.day-button');
+    const allNightlyRoutines = document.querySelectorAll('.nightly-products-container');
 
-  const nightlyList = document.querySelector('#nightly-products');
-  const buttons = document.querySelectorAll('.day-button');
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const day = button.dataset.day;
 
-  const getProductCardHTML = (product) => {
-    return `<div class="calendar-product">
-      <img src="${product.image}" alt="${product.accessCode}" />
-      <p>${product.accessCode}</p>
-    </div>`;
-  };
+        // Quitar la clase 'active' de todos los botones
+        buttons.forEach(btn => btn.classList.remove('active'));
+        // Ocultar todas las rutinas de noche
+        allNightlyRoutines.forEach(routine => routine.classList.add('ocultar'));
 
-  const renderNightlyRoutine = (day) => {
-    const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
-    const routine = weeklyProducts[capitalizedDay];
-    if (routine) {
-      nightlyList.innerHTML = '';
-      routine.forEach(product => {
-        nightlyList.innerHTML += getProductCardHTML(product);
+        // Añadir la clase 'active' al botón clickeado
+        button.classList.add('active');
+
+        // Mostrar la rutina del día correspondiente
+        const routineToShow = document.querySelector(`#nightly-products-${day}`);
+        if (routineToShow) {
+          routineToShow.classList.remove('ocultar');
+        }
       });
-    }
-  };
-
-  buttons.forEach(button => {
-    button.addEventListener('click', () => {
-      buttons.forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-      const day = button.dataset.day;
-      renderNightlyRoutine(day);
     });
   });
 </script>

@@ -1,8 +1,8 @@
 ---
 import { dailyRoutine, nightlyRoutineWithLactic, nightlyRoutineWithoutLactic } from '../data/routines';
-import ProductCard from '../components/ProductCard.astro';
 import Header from '../components/Header.astro';
 import Calendar from '../components/Calendar.astro';
+import ProductCard from '../components/ProductCard.astro';
 
 const horaActual = new Date().getHours();
 const isDayTime = horaActual >= 6 && horaActual < 20;
@@ -20,8 +20,6 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guía de Skincare</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/x-icon" href="/images/logo.png">
   <style>
     body {
       margin: 0;
@@ -87,6 +85,14 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
     .hidden {
         display: none !important;
     }
+    
+    /* Estilos de la lista de productos en columna */
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -100,16 +106,18 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
     <div id="guide-view">
         <h1 class="routine-title">{routineTitle}</h1>
-        {currentRoutine.map(product => (
-          <ProductCard
-            step={product.step}
-            title={product.title}
-            accessCode={product.accessCode}
-            function={product.function}
-            usage={product.usage}
-            image={product.image}
-          />
-        ))}
+        <div class="product-list">
+            {currentRoutine.map(product => (
+                <ProductCard
+                    step={product.step}
+                    title={product.title}
+                    accessCode={product.accessCode}
+                    function={product.function}
+                    usage={product.usage}
+                    image={product.image}
+                />
+            ))}
+        </div>
     </div>
 
     <div id="calendar-view" class="hidden">
