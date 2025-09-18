@@ -4,15 +4,7 @@ import Header from '../components/Header.astro';
 import Calendar from '../components/Calendar.astro';
 import ProductCard from '../components/ProductCard.astro';
 
-const now = new Date();
-const madridTimeFormatter = new Intl.DateTimeFormat('es-ES', {
-  hour: '2-digit',
-  hour12: false,
-  timeZone: 'Europe/Madrid'
-});
-const horaActual = parseInt(madridTimeFormatter.format(now));
-
-
+const horaActual = new Date().getHours();
 const isDayTime = horaActual >= 6 && horaActual < 20;
 
 const dayOfWeek = new Date().toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
