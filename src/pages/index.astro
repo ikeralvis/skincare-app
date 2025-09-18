@@ -4,11 +4,23 @@ import Header from '../components/Header.astro';
 import Calendar from '../components/Calendar.astro';
 import ProductCard from '../components/ProductCard.astro';
 
-const horaActual = new Date().getHours();
-const isDayTime = horaActual >= 6 && horaActual < 20;
+const now = new Date();
+// 🔹 Hora de Madrid
+const madridHourStr = new Intl.DateTimeFormat('es-ES', {
+  timeZone: 'Europe/Madrid',
+  hour12: false,
+  hour: '2-digit'
+}).format(now);
+const horaActual = parseInt(madridHourStr, 10);
 
-const dayOfWeek = new Date().toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
-const isLacticAcidDay = dayOfWeek === 'lunes' || dayOfWeek === 'miércoles' || dayOfWeek === 'viernes';
+// 🔹 Día de la semana en Madrid
+const dayOfWeek = new Intl.DateTimeFormat('es-ES', {
+  timeZone: 'Europe/Madrid',
+  weekday: 'long'
+}).format(now).toLowerCase();
+
+const isDayTime = horaActual >= 6 && horaActual < 20;
+const isLacticAcidDay = ['lunes', 'miércoles', 'viernes'].includes(dayOfWeek);
 
 const currentRoutine = isDayTime ? dailyRoutine : (isLacticAcidDay ? nightlyRoutineWithLactic : nightlyRoutineWithoutLactic);
 const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
