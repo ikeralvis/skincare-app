@@ -80,7 +80,7 @@ export const nightlyRoutineWithoutLactic = [
   },
   {
     step: 3,
-    title: "UNIDAD DE REPARACIÓN NOCTURNA: EMULSIÓN DE MANTENIMIENTO AVANZADA",
+    title: "Unidad de Reparación Nocturna: Emulsión de Mantenimiento Avanzada",
     accessCode: "The Ordinary Natural Moisturizing Factors + HA",
     function: "Sella todos los activos, proporcionando una nutrición profunda y duradera. Es el paso final para una regeneración óptima.",
     usage: "Aplica una dosis generosa sobre el rostro y el cuello.",
