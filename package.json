@@ -9,7 +9,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.13.3"
+    "astro": "^5.13.3",
+    "preact": "^10.27.2"
   },
   "devDependencies": {
     "@vite-pwa/astro": "^1.1.0"
