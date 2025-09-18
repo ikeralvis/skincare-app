@@ -1,5 +1,30 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
+import AstroPWA from '@vite-pwa/astro';
 
 // https://astro.build/config
-export default defineConfig({});
+export default defineConfig({
+  integrations: [
+    AstroPWA({
+      mode: 'production',
+      manifest: {
+        name: 'Guía de Skincare',
+        short_name: 'Skincare',
+        description: 'Tu guía personal de rutina de cuidado de la piel.',
+        theme_color: '#00ffff',
+        background_color: '#000000',
+        icons: [
+          {
+            src: 'logo.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+        ],
+      },
+    }),
+  ],
+});
