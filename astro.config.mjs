@@ -1,7 +1,9 @@
 import { defineConfig } from 'astro/config';
 import AstroPWA from '@vite-pwa/astro';
+import netlify from '@astrojs/netlify';
 
 export default defineConfig({
+  output: 'server', 
   integrations: [
     AstroPWA({
       mode: 'production',
@@ -37,4 +39,6 @@ export default defineConfig({
       },
     }),
   ],
+
+  adapter: netlify(),
 });
