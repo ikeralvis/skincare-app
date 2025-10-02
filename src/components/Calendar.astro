@@ -3,9 +3,14 @@ import { dailyRoutine, weeklyRoutine } from '../data/routines';
 
 const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
-// Formatear el día actual para que coincida con las claves de weeklyRoutine (ej: "Lunes")
-const todayFull = new Date().toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'Europe/Madrid' });
-const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1);
+const now = new Date();
+const todayFormatter = new Intl.DateTimeFormat('es-ES', {
+  timeZone: 'Europe/Madrid',
+  weekday: 'long'
+});
+const todayFull = todayFormatter.format(now); // Ejemplo: "jueves"
+const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1); // Ejemplo: "Jueves"
+
 ---
 
 <div class="calendar-container">
