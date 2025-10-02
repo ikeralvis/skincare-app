@@ -44,6 +44,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Guía de Skincare</title>
+    <link rel="manifest" href="/manifest.webmanifest" /> 
     <style>
       body {
         margin: 0;
@@ -164,6 +165,15 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
     </main>
 
     <script is:inline>
+
+      // PWA FIX 2: Registro manual del Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => console.log('Service Worker registrado con éxito:', reg.scope))
+          .catch((err) => console.error('Error al registrar Service Worker:', err));
+      }
+      // FIN DEL FIX PWA
+
       document.addEventListener("DOMContentLoaded", () => {
         const introScreen = document.getElementById("intro-screen");
         const mainContent = document.getElementById("main-content");

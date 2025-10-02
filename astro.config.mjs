@@ -8,7 +8,8 @@ export default defineConfig({
     AstroPWA({
       mode: 'production',
       registerType: 'autoUpdate',
-      injectRegister: 'auto', 
+      injectRegister: null, 
+      injectManifest: null, 
       scope: '/', 
       devOptions: {
         enabled: true,
