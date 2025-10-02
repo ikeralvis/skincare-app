@@ -9,6 +9,7 @@ export default defineConfig({
       mode: 'production',
       registerType: 'autoUpdate',
       injectRegister: 'auto', 
+      scope: '/', 
       devOptions: {
         enabled: true,
         navigateFallback: '/',
