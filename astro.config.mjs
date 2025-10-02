@@ -8,6 +8,7 @@ export default defineConfig({
     AstroPWA({
       mode: 'production',
       registerType: 'autoUpdate',
+      injectRegister: 'auto', 
       devOptions: {
         enabled: true,
         navigateFallback: '/',
@@ -35,6 +36,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{css,js,html,png,jpg,jpeg,svg,webp,json}'],
+        scope: '/', 
         navigateFallback: null,
       },
     }),
