@@ -179,6 +179,9 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
 
       <div id="guide-view">
         <h1 class="routine-title">{routineTitle}</h1>
+        <div class="centered-button" style="margin-bottom:16px;">
+          <button id="mark-completed" type="button">Marcar como completada</button>
+        </div>
         <!-- CONTROLES DE RECORDATORIO -->
         <div id="reminder-controls" style="margin-top:1rem; text-align:center;">
           <p style="margin-bottom:8px; color: #ccc;">Recordatorios</p>
@@ -295,296 +298,317 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
     </script>
 
     <script is:inline>
-      (function () {
-        // nombre de la clave en localStorage
-        const REMINDERS_KEY = "skincareReminders_v1";
-        const sessionTimers = {}; // timeouts en memoria (no se serializan)
+      // nombre de la clave en localStorage
+      const REMINDERS_KEY = "skincareReminders_v1";
+      const sessionTimers = {}; // timeouts en memoria (no se serializan)
 
-        // Helpers de storage
-        function loadReminders() {
+      // Helpers de storage
+      function loadReminders() {
+        try {
+          return JSON.parse(localStorage.getItem(REMINDERS_KEY) || "[]");
+        } catch (e) {
+          console.error("Error parseando recordatorios", e);
+          return [];
+        }
+      }
+      function saveReminders(list) {
+        localStorage.setItem(REMINDERS_KEY, JSON.stringify(list));
+      }
+
+      // Asegura registro de service worker (si existe)
+      async function ensureSWReady() {
+        if (!("serviceWorker" in navigator)) return null;
+        try {
+          return await navigator.serviceWorker.ready;
+        } catch (e) {
+          console.warn("Service Worker no listo", e);
+          return null;
+        }
+      }
+
+      // Pedir permiso de notificaciones si hace falta
+      function requestNotificationPermission() {
+        if (!("Notification" in window)) return Promise.resolve("denied");
+        if (Notification.permission === "granted")
+          return Promise.resolve("granted");
+        if (Notification.permission === "denied")
+          return Promise.resolve("denied");
+        return Notification.requestPermission();
+      }
+
+      // Mostrar un toast en-app como fallback
+      function showToast(text) {
+        let t = document.getElementById("sk-toast");
+        if (!t) {
+          t = document.createElement("div");
+          t.id = "sk-toast";
+          Object.assign(t.style, {
+            position: "fixed",
+            bottom: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#111",
+            padding: "10px 14px",
+            borderRadius: "8px",
+            color: "#fff",
+            zIndex: 9999,
+            opacity: "1",
+          });
+          document.body.appendChild(t);
+        }
+        t.textContent = text;
+        t.style.opacity = "1";
+        clearTimeout(t._hideTimer);
+        t._hideTimer = setTimeout(() => (t.style.opacity = "0"), 4000);
+      }
+
+      // Enviar notificación (intenta service worker, si no Notification())
+      async function showNotification(title, body, data = {}) {
+        if (!("Notification" in window)) {
+          showToast(body || title);
+          return;
+        }
+
+        const permission = Notification.permission;
+        if (permission !== "granted") {
+          showToast(body || title);
+          return;
+        }
+
+        const reg = await ensureSWReady();
+        const options = {
+          body: body,
+          tag: "skincare-reminder",
+          renotify: false,
+          data,
+          // Ajusta iconos según tu PWA (añade los archivos)
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-72.png",
+        };
+
+        try {
+          if (reg && typeof reg.showNotification === "function") {
+            // Mostramos desde el SW cuando sea posible
+            reg.showNotification(title, options);
+          } else {
+            new Notification(title, options);
+          }
+        } catch (e) {
+          console.warn(
+            "No se pudo mostrar notificación via SW, fallback a Notification",
+            e
+          );
           try {
-            return JSON.parse(localStorage.getItem(REMINDERS_KEY) || "[]");
-          } catch (e) {
-            console.error("Error parseando recordatorios", e);
-            return [];
-          }
-        }
-        function saveReminders(list) {
-          localStorage.setItem(REMINDERS_KEY, JSON.stringify(list));
-        }
-
-        // Asegura registro de service worker (si existe)
-        async function ensureSWReady() {
-          if (!("serviceWorker" in navigator)) return null;
-          try {
-            return await navigator.serviceWorker.ready;
-          } catch (e) {
-            console.warn("Service Worker no listo", e);
-            return null;
-          }
-        }
-
-        // Pedir permiso de notificaciones si hace falta
-        function requestNotificationPermission() {
-          if (!("Notification" in window)) return Promise.resolve("denied");
-          if (Notification.permission === "granted")
-            return Promise.resolve("granted");
-          if (Notification.permission === "denied")
-            return Promise.resolve("denied");
-          return Notification.requestPermission();
-        }
-
-        // Mostrar un toast en-app como fallback
-        function showToast(text) {
-          let t = document.getElementById("sk-toast");
-          if (!t) {
-            t = document.createElement("div");
-            t.id = "sk-toast";
-            Object.assign(t.style, {
-              position: "fixed",
-              bottom: "20px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              background: "#111",
-              padding: "10px 14px",
-              borderRadius: "8px",
-              color: "#fff",
-              zIndex: 9999,
-              opacity: "1",
-            });
-            document.body.appendChild(t);
-          }
-          t.textContent = text;
-          t.style.opacity = "1";
-          clearTimeout(t._hideTimer);
-          t._hideTimer = setTimeout(() => (t.style.opacity = "0"), 4000);
-        }
-
-        // Enviar notificación (intenta service worker, si no Notification())
-        async function showNotification(title, body, data = {}) {
-          if (!("Notification" in window)) {
+            new Notification(title, options);
+          } catch (err) {
             showToast(body || title);
-            return;
           }
+        }
+      }
 
-          const permission = Notification.permission;
-          if (permission !== "granted") {
-            showToast(body || title);
-            return;
-          }
+      // Disparar recordatorio (mark fired + notificación)
+      async function fireReminder(reminder) {
+        // Marca como fired
+        const list = loadReminders();
+        const idx = list.findIndex((r) => r.id === reminder.id);
+        if (idx !== -1) {
+          list[idx].fired = true;
+          saveReminders(list);
+        }
+        if (sessionTimers[reminder.id]) {
+          clearTimeout(sessionTimers[reminder.id]);
+          delete sessionTimers[reminder.id];
+        }
 
-          const reg = await ensureSWReady();
-          const options = {
-            body: body,
-            tag: "skincare-reminder",
-            renotify: false,
-            data,
-            // Ajusta iconos según tu PWA (añade los archivos)
-            icon: "/icons/icon-192.png",
-            badge: "/icons/icon-72.png",
-          };
+        const title = `Recordatorio Skincare`;
+        const body = `Es hora de tu rutina: ${reminder.title || "Rutina"}`;
+        await showNotification(title, body, { id: reminder.id });
+        renderReminders();
+      }
 
-          try {
-            if (reg && typeof reg.showNotification === "function") {
-              // Mostramos desde el SW cuando sea posible
-              reg.showNotification(title, options);
-            } else {
-              new Notification(title, options);
-            }
-          } catch (e) {
-            console.warn(
-              "No se pudo mostrar notificación via SW, fallback a Notification",
-              e
+      // Programar timeout en memoria (si queda tiempo)
+      function scheduleReminder(reminder) {
+        const remaining = reminder.when - Date.now();
+        if (remaining <= 0) {
+          // si ya pasó: disparar inmediatamente
+          fireReminder(reminder);
+          return;
+        }
+        const tid = setTimeout(() => fireReminder(reminder), remaining);
+        sessionTimers[reminder.id] = tid;
+      }
+
+      // Añadir recordatorio en X minutos
+      function addReminderIn(minutes) {
+        const titleElement = document.querySelector(".routine-title");
+        const title = titleElement
+          ? titleElement.textContent.trim()
+          : "Rutina";
+        const when = Date.now() + minutes * 60 * 1000;
+        const reminder = {
+          id: "r-" + Date.now(),
+          when,
+          minutes,
+          title,
+          fired: false,
+        };
+
+        const list = loadReminders();
+        list.push(reminder);
+        saveReminders(list);
+        scheduleReminder(reminder);
+
+        // Pedimos permiso (si el usuario acepta, la notificación saldrá)
+        requestNotificationPermission().then((perm) => {
+          if (perm !== "granted")
+            showToast(
+              "Permiso de notificaciones no concedido — usaré un aviso en la app."
             );
-            try {
-              new Notification(title, options);
-            } catch (err) {
-              showToast(body || title);
-            }
-          }
-        }
-
-        // Disparar recordatorio (mark fired + notificación)
-        async function fireReminder(reminder) {
-          // Marca como fired
-          const list = loadReminders();
-          const idx = list.findIndex((r) => r.id === reminder.id);
-          if (idx !== -1) {
-            list[idx].fired = true;
-            saveReminders(list);
-          }
-          if (sessionTimers[reminder.id]) {
-            clearTimeout(sessionTimers[reminder.id]);
-            delete sessionTimers[reminder.id];
-          }
-
-          const title = `Recordatorio Skincare`;
-          const body = `Es hora de tu rutina: ${reminder.title || "Rutina"}`;
-          await showNotification(title, body, { id: reminder.id });
-          renderReminders();
-        }
-
-        // Programar timeout en memoria (si queda tiempo)
-        function scheduleReminder(reminder) {
-          const remaining = reminder.when - Date.now();
-          if (remaining <= 0) {
-            // si ya pasó: disparar inmediatamente
-            fireReminder(reminder);
-            return;
-          }
-          const tid = setTimeout(() => fireReminder(reminder), remaining);
-          sessionTimers[reminder.id] = tid;
-        }
-
-        // Añadir recordatorio en X minutos
-        function addReminderIn(minutes) {
-          const titleElement = document.querySelector(".routine-title");
-          const title = titleElement
-            ? titleElement.textContent.trim()
-            : "Rutina";
-          const when = Date.now() + minutes * 60 * 1000;
-          const reminder = {
-            id: "r-" + Date.now(),
-            when,
-            minutes,
-            title,
-            fired: false,
-          };
-
-          const list = loadReminders();
-          list.push(reminder);
-          saveReminders(list);
-          scheduleReminder(reminder);
-
-          // Pedimos permiso (si el usuario acepta, la notificación saldrá)
-          requestNotificationPermission().then((perm) => {
-            if (perm !== "granted")
-              showToast(
-                "Permiso de notificaciones no concedido — usaré un aviso en la app."
-              );
-            else showToast("Recordatorio programado ✅");
-          });
-
-          renderReminders();
-        }
-
-        // Cancelar recordatorio
-        function cancelReminder(id) {
-          let list = loadReminders();
-          list = list.filter((r) => r.id !== id);
-          saveReminders(list);
-          if (sessionTimers[id]) {
-            clearTimeout(sessionTimers[id]);
-            delete sessionTimers[id];
-          }
-          renderReminders();
-        }
-
-        // Render lista de recordatorios (simple)
-        function renderReminders() {
-          const container = document.getElementById("reminders-list");
-          if (!container) return;
-          const list = loadReminders().sort((a, b) => a.when - b.when);
-          container.innerHTML = "";
-          if (list.length === 0) {
-            container.innerHTML =
-              "<div style='opacity:0.5;color:#0ff;text-align:center'>No hay recordatorios activos</div>";
-            return;
-          }
-          list.forEach((r) => {
-            const div = document.createElement("div");
-            div.className = "reminder-row";
-            div.style =
-              "display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;background:rgba(0,255,255,0.05);margin-bottom:8px;backdrop-filter:blur(4px);";
-
-            const left = document.createElement("div");
-            left.innerHTML = `<strong style="display:block;color:#0ff">${new Date(
-              r.when
-            ).toLocaleTimeString("es-ES", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}</strong><small style="opacity:0.7;color:#ccc">${r.title}</small>`;
-
-            const right = document.createElement("div");
-            right.style = "display:flex;align-items:center;gap:6px";
-
-            // ✅ Mostrar check si ya se disparó
-            if (r.fired) {
-              const span = document.createElement("span");
-              span.textContent = "enviado";
-              span.style.color = "#0ff";
-              span.style.fontSize = "0.85rem";
-              span.style.opacity = "0.7";
-              right.appendChild(span);
-            }
-
-            // ❌ Botón de eliminar siempre disponible
-            const btnCancel = document.createElement("button");
-            btnCancel.innerHTML = "❌";
-            btnCancel.style =
-              "padding:4px 8px;border-radius:6px;border:none;cursor:pointer;background:rgba(255,0,255,0.1);color:#ff5555;font-size:0.9rem;transition:0.2s;backdrop-filter:blur(2px)";
-            btnCancel.title = "Eliminar recordatorio";
-            btnCancel.addEventListener("mouseenter", () => {
-              btnCancel.style.background = "rgba(255,0,255,0.3)";
-              btnCancel.style.boxShadow = "0 0 6px #ff00ff";
-            });
-            btnCancel.addEventListener("mouseleave", () => {
-              btnCancel.style.background = "rgba(255,0,255,0.1)";
-              btnCancel.style.boxShadow = "none";
-            });
-            btnCancel.addEventListener("click", () => cancelReminder(r.id));
-            right.appendChild(btnCancel);
-
-            div.appendChild(left);
-            div.appendChild(right);
-            container.appendChild(div);
-          });
-        }
-
-        // Inicializa: restaurar timers de localStorage
-        function initReminders() {
-          const list = loadReminders();
-          list.forEach((r) => {
-            if (!r.fired && r.when > Date.now()) scheduleReminder(r);
-            else if (!r.fired && r.when <= Date.now()) {
-              // algo quedó pendiente, lo disparamos al iniciar
-              fireReminder(r);
-            }
-          });
-          renderReminders();
-        }
-
-        // Wire UI (botones)
-        document.addEventListener("DOMContentLoaded", () => {
-          const btn10 = document.getElementById("rem-10");
-          const btn30 = document.getElementById("rem-30");
-          const btn60 = document.getElementById("rem-60");
-          const form = document.getElementById("rem-custom-form");
-
-          if (btn10) btn10.addEventListener("click", () => addReminderIn(10));
-          if (btn30) btn30.addEventListener("click", () => addReminderIn(30));
-          if (btn60) btn60.addEventListener("click", () => addReminderIn(60));
-          if (form) {
-            form.addEventListener("submit", (e) => {
-              e.preventDefault();
-              const minutes = parseInt(form.elements["minutes"].value, 10);
-              if (!minutes || minutes <= 0)
-                return showToast("Introduce un número válido de minutos");
-              addReminderIn(minutes);
-              form.reset();
-            });
-          }
-
-          initReminders();
+          else showToast("Recordatorio programado ✅");
         });
+
+        renderReminders();
+      }
+
+      // Cancelar recordatorio
+      function cancelReminder(id) {
+        let list = loadReminders();
+        list = list.filter((r) => r.id !== id);
+        saveReminders(list);
+        if (sessionTimers[id]) {
+          clearTimeout(sessionTimers[id]);
+          delete sessionTimers[id];
+        }
+        renderReminders();
+      }
+
+      // Render lista de recordatorios (simple)
+      function renderReminders() {
+        const container = document.getElementById("reminders-list");
+        if (!container) return;
+        const list = loadReminders().sort((a, b) => a.when - b.when);
+        container.innerHTML = "";
+        if (list.length === 0) {
+          container.innerHTML =
+            "<div style='opacity:0.5;color:#0ff;text-align:center'>No hay recordatorios activos</div>";
+          return;
+        }
+        list.forEach((r) => {
+          const div = document.createElement("div");
+          div.className = "reminder-row";
+          div.style =
+            "display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;background:rgba(0,255,255,0.05);margin-bottom:8px;backdrop-filter:blur(4px);";
+
+          const left = document.createElement("div");
+          left.innerHTML = `<strong style="display:block;color:#0ff">${new Date(
+            r.when
+          ).toLocaleTimeString("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}</strong><small style="opacity:0.7;color:#ccc">${r.title}</small>`;
+
+          const right = document.createElement("div");
+          right.style = "display:flex;align-items:center;gap:6px";
+
+          // ✅ Mostrar check si ya se disparó
+          if (r.fired) {
+            const span = document.createElement("span");
+            span.textContent = "enviado";
+            span.style.color = "#0ff";
+            span.style.fontSize = "0.85rem";
+            span.style.opacity = "0.7";
+            right.appendChild(span);
+          }
+
+          // ❌ Botón de eliminar siempre disponible
+          const btnCancel = document.createElement("button");
+          btnCancel.innerHTML = "❌";
+          btnCancel.style =
+            "padding:4px 8px;border-radius:6px;border:none;cursor:pointer;background:rgba(255,0,255,0.1);color:#ff5555;font-size:0.9rem;transition:0.2s;backdrop-filter:blur(2px)";
+          btnCancel.title = "Eliminar recordatorio";
+          btnCancel.addEventListener("mouseenter", () => {
+            btnCancel.style.background = "rgba(255,0,255,0.3)";
+            btnCancel.style.boxShadow = "0 0 6px #ff00ff";
+          });
+          btnCancel.addEventListener("mouseleave", () => {
+            btnCancel.style.background = "rgba(255,0,255,0.1)";
+            btnCancel.style.boxShadow = "none";
+          });
+          btnCancel.addEventListener("click", () => cancelReminder(r.id));
+          right.appendChild(btnCancel);
+
+          div.appendChild(left);
+          div.appendChild(right);
+          container.appendChild(div);
+        });
+      }
+
+      // Inicializa: restaurar timers de localStorage
+      function initReminders() {
+        const list = loadReminders();
+        list.forEach((r) => {
+          if (!r.fired && r.when > Date.now()) scheduleReminder(r);
+          else if (!r.fired && r.when <= Date.now()) {
+            // algo quedó pendiente, lo disparamos al iniciar
+            fireReminder(r);
+          }
+        });
+        renderReminders();
+      }
+
+      // Wire UI (botones)
+      document.addEventListener("DOMContentLoaded", () => {
+        const btn10 = document.getElementById("rem-10");
+        const btn30 = document.getElementById("rem-30");
+        const btn60 = document.getElementById("rem-60");
+        const form = document.getElementById("rem-custom-form");
+
+        if (btn10) btn10.addEventListener("click", () => addReminderIn(10));
+        if (btn30) btn30.addEventListener("click", () => addReminderIn(30));
+        if (btn60) btn60.addEventListener("click", () => addReminderIn(60));
+        if (form) {
+          form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const minutes = parseInt(form.elements["minutes"].value, 10);
+            if (!minutes || minutes <= 0)
+              return showToast("Introduce un número válido de minutos");
+            addReminderIn(minutes);
+            form.reset();
+          });
+        }
+
+        initReminders();
+        // Función para marcar rutina como completada
+        function markRoutineCompleted(routineType) {
+          const todayKey = new Date().toISOString().split("T")[0];
+          let completed = JSON.parse(localStorage.getItem("completedRoutines") || "{}");
+          if (!completed[todayKey]) completed[todayKey] = [];
+          if (!completed[todayKey].includes(routineType)) {
+            completed[todayKey].push(routineType);
+            localStorage.setItem("completedRoutines", JSON.stringify(completed));
+          }
+        }
+        // Botón marcar como completada
+        const btnComplete=document.getElementById("mark-completed");
+        // Recalcular isDayTime en el cliente
+        const now = new Date();
+        const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
+        const isDayTimeClient = madridHour >= 6 && madridHour < 20;
+        const routineType = isDayTimeClient ? "diurno":"nocturno";
+        const todayKey = new Date().toISOString().split("T")[0];
+        const completed=JSON.parse(localStorage.getItem("completedRoutines")||"{}");
+        if(completed[todayKey]?.includes(routineType)){btnComplete.disabled=true; btnComplete.textContent="✅ Rutina completada"; btnComplete.style.opacity=0.6;}
+        btnComplete?.addEventListener("click",()=>{markRoutineCompleted(routineType);btnComplete.disabled=true; btnComplete.textContent="✅ Rutina completada"; btnComplete.style.opacity=0.6;});
 
         // Exponer para debugging
         window.skincareReminders = {
           addReminderIn,
           loadReminders,
           cancelReminder,
+          markRoutineCompleted
         };
-      })();
+        
+      });
     </script>
   </body>
 </html>
