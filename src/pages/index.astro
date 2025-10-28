@@ -1,17 +1,13 @@
 ---
 export const prerender = false; // Desactivar prerender para contenido dinámico
 import {
-  dailyRoutine as hardcodedDaily,
-  nightlyRoutineWithLactic as hardcodedNightlyLactic,
-  nightlyRoutineWithoutLactic as hardcodedNightlyWithout,
+  dailyRoutine,
+  nightlyRoutineWithLactic,
+  nightlyRoutineWithoutLactic,
 } from "../data/routines";
-import { getRoutines, createEmptyRoutineData } from "../utils/firebase";
-import type { RoutineData, Product } from "../types/routine";
 import Header from "../components/Header.astro";
 import Calendar from "../components/Calendar.astro";
 import ProductCard from "../components/ProductCard.astro";
-import RoutineEditor from "../components/RoutineEditor.astro";
-import AuthModal from "../components/AuthModal.astro";
 
 const now = new Date();
 // 🔹 Hora de Madrid
@@ -31,62 +27,13 @@ const dayOfWeek = new Intl.DateTimeFormat("es-ES", {
   .toLowerCase();
 
 const isDayTime = horaActual >= 6 && horaActual < 20;
-const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
 
-// Cargar rutinas desde Firebase
-let routineData: RoutineData;
-let currentRoutine: Product[];
-
-try {
-  const data = await getRoutines();
-  routineData = data || createEmptyRoutineData();
-  
-  if (isDayTime) {
-    currentRoutine = routineData.dailyRoutine.filter(p => p.enabled).sort((a, b) => a.step - b.step);
-  } else {
-    currentRoutine = (routineData.nightlyRoutines[capitalizedDay] || [])
-      .filter(p => p.enabled)
-      .sort((a, b) => a.step - b.step);
-  }
-  
-  // Si no hay rutinas guardadas, usar las hardcoded como fallback
-  if (currentRoutine.length === 0) {
-    const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
-    const hardcodedRoutine = isDayTime
-      ? hardcodedDaily
-      : isLacticAcidDay
-        ? hardcodedNightlyLactic
-        : hardcodedNightlyWithout;
-    
-    // Convertir al formato Product
-    currentRoutine = hardcodedRoutine.map((item, index) => ({
-      ...item,
-      id: `fallback-${index}`,
-      routineType: isDayTime ? ('day' as const) : ('night' as const),
-      frequency: 'daily' as const,
-      enabled: true,
-    }));
-  }
-} catch (error) {
-  console.error('Error cargando rutinas:', error);
-  // Fallback a rutinas hardcoded
-  const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
-  const hardcodedRoutine = isDayTime
-    ? hardcodedDaily
-    : isLacticAcidDay
-      ? hardcodedNightlyLactic
-      : hardcodedNightlyWithout;
-  
-  // Convertir al formato Product
-  currentRoutine = hardcodedRoutine.map((item, index) => ({
-    ...item,
-    id: `fallback-${index}`,
-    routineType: isDayTime ? ('day' as const) : ('night' as const),
-    frequency: 'daily' as const,
-    enabled: true,
-  }));
-}
-
+const currentRoutine = isDayTime
+  ? dailyRoutine
+  : isLacticAcidDay
+    ? nightlyRoutineWithLactic
+    : nightlyRoutineWithoutLactic;
 const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
 const jsDateKey =
@@ -222,8 +169,6 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
     </style>
   </head>
   <body>
-    <AuthModal />
-    
     <div id="intro-screen" class="intro-screen">
       <h1>Bienvenido a la guía de Skin Care</h1>
       <div class="iris-scan"></div>
@@ -305,10 +250,6 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
       <div id="calendar-view" class="hidden">
         <Calendar />
       </div>
-
-      <div id="routines-view" class="hidden">
-        <RoutineEditor />
-      </div>
     </main>
 
     <script is:inline>
@@ -338,7 +279,6 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
         const navButtons = document.querySelectorAll(".main-nav .nav-link");
         const guideView = document.getElementById("guide-view");
         const calendarView = document.getElementById("calendar-view");
-        const routinesView = document.getElementById("routines-view");
 
         navButtons.forEach((button) => {
           button.addEventListener("click", () => {
@@ -348,15 +288,9 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
             if (button.dataset.view === "guide") {
               guideView.classList.remove("hidden");
               calendarView.classList.add("hidden");
-              routinesView.classList.add("hidden");
             } else if (button.dataset.view === "calendar") {
               guideView.classList.add("hidden");
               calendarView.classList.remove("hidden");
-              routinesView.classList.add("hidden");
-            } else if (button.dataset.view === "routines") {
-              guideView.classList.add("hidden");
-              calendarView.classList.add("hidden");
-              routinesView.classList.remove("hidden");
             }
           });
         });
@@ -674,18 +608,6 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
           markRoutineCompleted
         };
         
-      });
-
-      // 🔄 NUEVA FUNCIONALIDAD: Detectar cambios en rutinas y recargar
-      // Esto permite que los cambios en el editor se reflejen sin recargar
-      window.addEventListener('routines-updated', function() {
-        console.log('✅ Rutinas actualizadas detectadas. Recarga la página para ver los cambios.');
-        // Opcional: Mostrar un toast o notificación
-        const toast = document.createElement('div');
-        toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00ffff;color:#000;padding:12px 24px;border-radius:8px;z-index:9999;font-weight:bold;';
-        toast.textContent = '✅ Rutinas actualizadas. Recarga para ver cambios.';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 5000);
       });
     </script>
   </body>
