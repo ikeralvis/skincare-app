@@ -786,6 +786,13 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
             }
           });
         }
+
+        // Listener para actualizar progreso cuando se marca una rutina como completada
+        window.addEventListener('routine-completed', () => {
+          if (typeof window.loadProgressData === 'function') {
+            window.loadProgressData(true);
+          }
+        });
       });
     </script>
 
@@ -796,8 +803,20 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
       // Función para cargar datos de progreso
       let progressDataLoaded = false;
       
-      async function loadProgressData() {
-        if (progressDataLoaded) return; // Ya se cargó, no volver a cargar
+      async function loadProgressData(forceReload = false) {
+        if (progressDataLoaded && !forceReload) return; // Ya se cargó, no volver a cargar
+        
+        // Resetear elementos si es recarga
+        if (forceReload) {
+          const loadingEl = document.getElementById('progress-loading');
+          const contentEl = document.getElementById('progress-content');
+          if (loadingEl) {
+            loadingEl.style.display = 'block';
+            loadingEl.innerHTML = '<div class="progress-loading-spinner"></div><p>Cargando estadísticas...</p>';
+          }
+          if (contentEl) contentEl.style.display = 'none';
+          progressDataLoaded = false;
+        }
         
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -968,6 +987,102 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
       
       // Hacer la función disponible globalmente
       (window as any).loadProgressData = loadProgressData;
+
+      // ==================== FUNCIONES DE RUTINA ====================
+      import { markRoutineComplete, isRoutineCompleted } from '../utils/firebase';
+
+      // Función para mostrar toast (debe estar definida en el scope global)
+      function showToast(message: string) {
+        if (typeof (window as any).showToast === 'function') {
+          (window as any).showToast(message);
+        } else {
+          alert(message);
+        }
+      }
+
+      // Función para marcar rutina como completada
+      async function markRoutineCompleted(routineType: string) {
+        try {
+          // Verificar autenticación
+          const user = await new Promise((resolve) => {
+            const unsubscribe = onAuthStateChanged(auth, (user) => {
+              unsubscribe();
+              resolve(user);
+            });
+          });
+          
+          if (!user) {
+            showToast('⚠️ Debes iniciar sesión para marcar rutinas');
+            window.dispatchEvent(new CustomEvent('open-auth-modal'));
+            return;
+          }
+          
+          const todayKey = new Date().toISOString().split("T")[0];
+          const firestoreRoutineType = routineType === "diurno" ? "morning" : "night";
+          
+          await markRoutineComplete(todayKey, firestoreRoutineType);
+          
+          // Actualizar UI
+          const btnComplete = document.getElementById("mark-completed");
+          if (btnComplete) {
+            btnComplete.setAttribute('disabled', 'true');
+            btnComplete.textContent = "✅ Rutina completada";
+            (btnComplete as HTMLButtonElement).style.opacity = "0.6";
+            (btnComplete as HTMLButtonElement).style.cursor = "not-allowed";
+          }
+          
+          // Disparar evento para actualizar progreso
+          window.dispatchEvent(new CustomEvent('routine-completed'));
+          
+          showToast(`¡Rutina ${routineType} completada! 🎉 Ve a Progreso para ver tu racha.`);
+        } catch (error) {
+          console.error('Error marcando rutina:', error);
+          showToast('❌ Error al marcar rutina. Verifica tu conexión e intenta de nuevo.');
+        }
+      }
+
+      // Función para verificar si ya está completada hoy
+      async function checkTodayCompletion() {
+        try {
+          // Verificar autenticación
+          const user = await new Promise((resolve) => {
+            const unsubscribe = onAuthStateChanged(auth, (user) => {
+              unsubscribe();
+              resolve(user);
+            });
+          });
+          
+          const btnComplete = document.getElementById("mark-completed");
+          
+          if (!user) {
+            // No autenticado, mostrar modal al hacer clic
+            btnComplete?.addEventListener("click", () => {
+              showToast('⚠️ Debes iniciar sesión para marcar rutinas');
+              window.dispatchEvent(new CustomEvent('open-auth-modal'));
+            });
+            return;
+          }
+          
+          const todayKey = new Date().toISOString().split("T")[0];
+          const currentRoutine = (window as any).currentRoutine || "diurno";
+          const firestoreRoutineType = currentRoutine === "diurno" ? "morning" : "night";
+          
+          const alreadyDone = await isRoutineCompleted(todayKey, firestoreRoutineType);
+          
+          if (alreadyDone && btnComplete) {
+            btnComplete.setAttribute('disabled', 'true');
+            btnComplete.textContent = "✅ Rutina completada";
+            (btnComplete as HTMLButtonElement).style.opacity = "0.6";
+            (btnComplete as HTMLButtonElement).style.cursor = "not-allowed";
+          }
+        } catch (error) {
+          console.error('Error verificando completado:', error);
+        }
+      }
+
+      // Hacer funciones disponibles globalmente
+      (window as any).markRoutineCompleted = markRoutineCompleted;
+      (window as any).checkTodayCompletion = checkTodayCompletion;
     </script>
 
     <script is:inline>
@@ -1254,85 +1369,36 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
         
         // ==================== SEGUIMIENTO DE RUTINAS CON FIREBASE ====================
         
-        // Función para marcar rutina como completada en Firebase
-        async function markRoutineCompleted(routineType) {
-          try {
-            const { markRoutineComplete, getProgressData } = await import('./src/utils/firebase.ts');
-            const todayKey = new Date().toISOString().split("T")[0];
-            const firestoreRoutineType = routineType === "diurno" ? "morning" : "night";
-            
-            await markRoutineComplete(todayKey, firestoreRoutineType);
-            
-            // Actualizar UI
-            btnComplete.disabled = true;
-            btnComplete.textContent = "✅ Rutina completada";
-            btnComplete.style.opacity = "0.6";
-            btnComplete.style.cursor = "not-allowed";
-            
-            // Badge removido - ahora en /progreso
-            
-            showToast(`¡Rutina ${routineType} completada! 🎉 Ve a Progreso para ver tu racha.`);
-          } catch (error) {
-            console.error('Error marcando rutina:', error);
-            showToast('Error al marcar rutina. ¿Estás conectado?');
-          }
-        }
+        // Usar las funciones globales del script de módulo
+        // Determinar tipo de rutina basado en la hora
+        const now = new Date();
+        const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
+        const isDayTimeClient = madridHour >= 6 && madridHour < 20;
+        const routineType = isDayTimeClient ? "diurno" : "nocturno";
+        
+        // Guardar en window para que checkTodayCompletion lo pueda usar
+        window.currentRoutine = routineType;
         
         // Botón marcar como completada
         const btnComplete = document.getElementById("mark-completed");
         
-        // Verificar si ya está completada hoy (desde Firebase)
-        async function checkTodayCompletion() {
-          try {
-            const { isRoutineCompleted, getProgressData } = await import('./src/utils/firebase.ts');
-            const now = new Date();
-            const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
-            const isDayTimeClient = madridHour >= 6 && madridHour < 20;
-            const routineType = isDayTimeClient ? "diurno" : "nocturno";
-            const firestoreRoutineType = isDayTimeClient ? "morning" : "night";
-            const todayKey = new Date().toISOString().split("T")[0];
-            
-            const completed = await isRoutineCompleted(todayKey, firestoreRoutineType);
-            
-            if (completed) {
-              btnComplete.disabled = true;
-              btnComplete.textContent = "✅ Rutina completada";
-              btnComplete.style.opacity = "0.6";
-              btnComplete.style.cursor = "not-allowed";
-            }
-            
-            // Badge removido - ahora en /progreso
-            
-            // Configurar listener del botón
-            btnComplete?.addEventListener("click", () => {
-              if (!btnComplete.disabled) {
-                markRoutineCompleted(routineType);
-              }
-            });
-          } catch (error) {
-            console.error('Error verificando completado:', error);
-            // Fallback: permitir marcar aunque haya error
-            const now = new Date();
-            const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
-            const isDayTimeClient = madridHour >= 6 && madridHour < 20;
-            const routineType = isDayTimeClient ? "diurno" : "nocturno";
-            btnComplete?.addEventListener("click", () => {
-              if (!btnComplete.disabled) {
-                markRoutineCompleted(routineType);
-              }
-            });
+        // Configurar listener del botón
+        btnComplete?.addEventListener("click", () => {
+          if (!btnComplete.disabled && window.markRoutineCompleted) {
+            window.markRoutineCompleted(routineType);
           }
-        }
+        });
         
-        checkTodayCompletion();
+        // Verificar si ya está completada hoy
+        if (window.checkTodayCompletion) {
+          window.checkTodayCompletion();
+        }
 
         // Exponer para debugging
         window.skincareReminders = {
           addReminderIn,
           loadReminders,
-          cancelReminder,
-          markRoutineCompleted,
-          checkTodayCompletion
+          cancelReminder
         };
         
       });
