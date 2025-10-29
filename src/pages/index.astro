@@ -1,13 +1,18 @@
 ---
 export const prerender = false; // Desactivar prerender para contenido dinámico
 import {
-  dailyRoutine,
-  nightlyRoutineWithLactic,
-  nightlyRoutineWithoutLactic,
+  dailyRoutine as hardcodedDaily,
+  nightlyRoutineWithLactic as hardcodedNightlyLactic,
+  nightlyRoutineWithoutLactic as hardcodedNightlyWithout,
 } from "../data/routines";
+import { getRoutines, createEmptyRoutineData } from "../utils/firebase";
+import type { RoutineData, Product } from "../types/routine";
 import Header from "../components/Header.astro";
 import Calendar from "../components/Calendar.astro";
 import ProductCard from "../components/ProductCard.astro";
+import RoutineEditor from "../components/RoutineEditor.astro";
+import AuthModal from "../components/AuthModal.astro";
+import BottomNav from "../components/BottomNav.astro";
 
 const now = new Date();
 // 🔹 Hora de Madrid
@@ -27,13 +32,62 @@ const dayOfWeek = new Intl.DateTimeFormat("es-ES", {
   .toLowerCase();
 
 const isDayTime = horaActual >= 6 && horaActual < 20;
-const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
+const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
-const currentRoutine = isDayTime
-  ? dailyRoutine
-  : isLacticAcidDay
-    ? nightlyRoutineWithLactic
-    : nightlyRoutineWithoutLactic;
+// Cargar rutinas desde Firebase
+let routineData: RoutineData;
+let currentRoutine: Product[];
+
+try {
+  const data = await getRoutines();
+  routineData = data || createEmptyRoutineData();
+  
+  if (isDayTime) {
+    currentRoutine = routineData.dailyRoutine.filter(p => p.enabled).sort((a, b) => a.step - b.step);
+  } else {
+    currentRoutine = (routineData.nightlyRoutines[capitalizedDay] || [])
+      .filter(p => p.enabled)
+      .sort((a, b) => a.step - b.step);
+  }
+  
+  // Si no hay rutinas guardadas, usar las hardcoded como fallback
+  if (currentRoutine.length === 0) {
+    const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
+    const hardcodedRoutine = isDayTime
+      ? hardcodedDaily
+      : isLacticAcidDay
+        ? hardcodedNightlyLactic
+        : hardcodedNightlyWithout;
+    
+    // Convertir al formato Product
+    currentRoutine = hardcodedRoutine.map((item, index) => ({
+      ...item,
+      id: `fallback-${index}`,
+      routineType: isDayTime ? ('day' as const) : ('night' as const),
+      frequency: 'daily' as const,
+      enabled: true,
+    }));
+  }
+} catch (error) {
+  console.error('Error cargando rutinas:', error);
+  // Fallback a rutinas hardcoded
+  const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
+  const hardcodedRoutine = isDayTime
+    ? hardcodedDaily
+    : isLacticAcidDay
+      ? hardcodedNightlyLactic
+      : hardcodedNightlyWithout;
+  
+  // Convertir al formato Product
+  currentRoutine = hardcodedRoutine.map((item, index) => ({
+    ...item,
+    id: `fallback-${index}`,
+    routineType: isDayTime ? ('day' as const) : ('night' as const),
+    frequency: 'daily' as const,
+    enabled: true,
+  }));
+}
+
 const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
 const jsDateKey =
@@ -121,6 +175,59 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
         display: none;
         padding-top: 100px;
       }
+
+      /* Logo móvil */
+      .mobile-logo {
+        display: none; /* Oculto por defecto */
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 0.75rem 1rem;
+        z-index: 45;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+      }
+
+      .mobile-logo img {
+        height: 40px;
+        width: auto;
+      }
+
+      .mobile-user-btn {
+        background: rgba(0, 255, 255, 0.2);
+        border: 2px solid #00ffff;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .mobile-user-btn:hover {
+        background: rgba(0, 255, 255, 0.4);
+        transform: scale(1.05);
+      }
+
+      /* Mostrar logo móvil solo en móvil */
+      @media (max-width: 768px) {
+        .mobile-logo {
+          display: flex;
+        }
+        .main-content {
+          padding-top: 70px; /* Espacio para el logo móvil */
+        }
+      }
+
       .routine-title {
         text-align: center;
         margin-bottom: 2rem;
@@ -133,6 +240,253 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
       .centered-button {
         display: flex;
         justify-content: center;
+      }
+
+      /* === ESTILOS DE PROGRESO === */
+      .progress-title-main {
+        font-family: "Phatt", sans-serif;
+        font-size: 2rem;
+        color: #00ffff;
+        text-align: center;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      }
+
+      /* Tarjeta de racha principal */
+      .streak-card {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 30px rgba(255, 107, 107, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .streak-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: pulse 3s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+      }
+
+      .streak-icon {
+        font-size: 4rem;
+        margin-bottom: 0.5rem;
+        animation: flicker 2s ease-in-out infinite;
+      }
+
+      @keyframes flicker {
+        0%, 100% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.1); filter: brightness(1.3); }
+      }
+
+      .streak-number {
+        font-size: 3.5rem;
+        font-weight: bold;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+      }
+
+      .streak-label {
+        font-size: 1.2rem;
+        opacity: 0.95;
+        font-weight: 500;
+      }
+
+      .streak-message {
+        margin-top: 1rem;
+        font-size: 1rem;
+        font-weight: 500;
+        opacity: 0.9;
+      }
+
+      /* Tarjetas de estadísticas */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .stat-card:hover {
+        border-color: #00ffff;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        transform: translateY(-4px);
+      }
+
+      .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #00ffff;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      /* Barra de progreso semanal */
+      .progress-section {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .progress-section-title {
+        font-size: 1.1rem;
+        color: #00ffff;
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+
+      .progress-bar-container {
+        width: 100%;
+        height: 30px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 0.5rem;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00ffff 0%, #00dddd 100%);
+        border-radius: 15px;
+        transition: width 1s ease;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        position: relative;
+      }
+
+      .progress-bar-fill::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+      }
+
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
+      .progress-text {
+        text-align: center;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Calendario mini */
+      .calendar-preview {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .calendar-preview-title {
+        font-size: 1.1rem;
+        color: #00ffff;
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+
+      .week-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.5rem;
+      }
+
+      .day-cell {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .day-cell.completed {
+        background: linear-gradient(135deg, #00ff88 0%, #00ddaa 100%);
+        border-color: #00ff88;
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+      }
+
+      .day-cell.partial {
+        background: linear-gradient(135deg, #ffaa00 0%, #ff8800 100%);
+        border-color: #ffaa00;
+      }
+
+      .day-cell.today {
+        border: 2px solid #00ffff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      }
+
+      .day-name {
+        font-size: 0.65rem;
+        opacity: 0.7;
+        margin-bottom: 0.25rem;
+      }
+
+      /* Loading state progreso */
+      .progress-loading {
+        text-align: center;
+        padding: 2rem;
+        color: #00ffff;
+      }
+
+      .progress-loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(0, 255, 255, 0.2);
+        border-top-color: #00ffff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
       }
       /* 🔑 ESTILO MEJORADO DEL BOTÓN */
       #mark-completed {
@@ -169,12 +523,22 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
     </style>
   </head>
   <body>
+    <AuthModal />
+    
     <div id="intro-screen" class="intro-screen">
       <h1>Bienvenido a la guía de Skin Care</h1>
       <div class="iris-scan"></div>
     </div>
 
     <main id="main-content" class="main-content">
+      <!-- Logo móvil (solo visible en móvil) -->
+      <div class="mobile-logo">
+        <img src="/images/logo.png" alt="Skincare Logo" />
+        <button id="mobile-user-menu-btn" class="mobile-user-btn" title="Cuenta">
+          👤
+        </button>
+      </div>
+      
       <Header />
 
       <div id="guide-view">
@@ -250,6 +614,73 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
       <div id="calendar-view" class="hidden">
         <Calendar />
       </div>
+
+      <div id="progress-view" class="hidden">
+        <h1 class="progress-title-main">Tu Progreso</h1>
+
+        <div id="progress-loading" class="progress-loading">
+          <div class="progress-loading-spinner"></div>
+          <p>Cargando estadísticas...</p>
+        </div>
+
+        <div id="progress-content" style="display: none;">
+          <!-- Tarjeta principal de racha -->
+          <div class="streak-card">
+            <div class="streak-icon">🔥</div>
+            <div class="streak-number" id="streak-number">0</div>
+            <div class="streak-label">días de racha</div>
+            <div class="streak-message" id="streak-message">¡Sigue así!</div>
+          </div>
+
+          <!-- Grid de estadísticas -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">🏆</div>
+              <div class="stat-number" id="longest-streak">0</div>
+              <div class="stat-label">Récord Personal</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">✨</div>
+              <div class="stat-number" id="total-completions">0</div>
+              <div class="stat-label">Total Completadas</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">📅</div>
+              <div class="stat-number" id="days-active">0</div>
+              <div class="stat-label">Días Activos</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">💪</div>
+              <div class="stat-number" id="completion-rate">0%</div>
+              <div class="stat-label">Tasa de Éxito</div>
+            </div>
+          </div>
+
+          <!-- Progreso semanal -->
+          <div class="progress-section">
+            <div class="progress-section-title">Progreso esta semana</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0 de 14 rutinas completadas</div>
+          </div>
+
+          <!-- Mini calendario de última semana -->
+          <div class="calendar-preview">
+            <div class="calendar-preview-title">Últimos 7 días</div>
+            <div class="week-grid" id="week-calendar">
+              <!-- Se llena dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="routines-view" class="hidden">
+        <RoutineEditor />
+      </div>
     </main>
 
     <script is:inline>
@@ -269,32 +700,274 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
         const introScreen = document.getElementById("intro-screen");
         const mainContent = document.getElementById("main-content");
 
-        setTimeout(() => {
+        // Verificar si ya se mostró la intro en esta sesión
+        const introShown = sessionStorage.getItem('introShown');
+        
+        if (introShown) {
+          // Si ya se mostró, saltarla
           introScreen.classList.add("hidden");
+          mainContent.style.display = "block";
+        } else {
+          // Primera vez, mostrar intro
           setTimeout(() => {
-            mainContent.style.display = "block";
-          }, 1000);
-        }, 3000);
+            introScreen.classList.add("hidden");
+            setTimeout(() => {
+              mainContent.style.display = "block";
+              // Marcar que ya se mostró
+              sessionStorage.setItem('introShown', 'true');
+            }, 1000);
+          }, 3000);
+        }
 
         const navButtons = document.querySelectorAll(".main-nav .nav-link");
+        const bottomNavButtons = document.querySelectorAll("#bottom-nav .nav-item");
         const guideView = document.getElementById("guide-view");
         const calendarView = document.getElementById("calendar-view");
+        const progressView = document.getElementById("progress-view");
+        const routinesView = document.getElementById("routines-view");
 
+        // Función para activar una vista
+        function activateView(viewName) {
+          // Remover active de todos los botones
+          navButtons.forEach((btn) => btn.classList.remove("active"));
+          bottomNavButtons.forEach((btn) => btn.classList.remove("active"));
+          
+          // Ocultar todas las vistas
+          guideView.classList.add("hidden");
+          calendarView.classList.add("hidden");
+          progressView.classList.add("hidden");
+          routinesView.classList.add("hidden");
+          
+          // Activar la vista correspondiente
+          if (viewName === "guide") {
+            guideView.classList.remove("hidden");
+            document.querySelector('[data-view="guide"]')?.classList.add("active");
+          } else if (viewName === "calendar") {
+            calendarView.classList.remove("hidden");
+            document.querySelector('[data-view="calendar"]')?.classList.add("active");
+          } else if (viewName === "progress") {
+            progressView.classList.remove("hidden");
+            document.querySelector('[data-view="progress"]')?.classList.add("active");
+            // Cargar datos de progreso si no se han cargado
+            if (window.loadProgressData) {
+              window.loadProgressData();
+            }
+          } else if (viewName === "routines") {
+            routinesView.classList.remove("hidden");
+            document.querySelector('[data-view="routines"]')?.classList.add("active");
+          }
+        }
+
+        // Event listeners para botones del header
         navButtons.forEach((button) => {
           button.addEventListener("click", () => {
-            navButtons.forEach((btn) => btn.classList.remove("active"));
-            button.classList.add("active");
-
-            if (button.dataset.view === "guide") {
-              guideView.classList.remove("hidden");
-              calendarView.classList.add("hidden");
-            } else if (button.dataset.view === "calendar") {
-              guideView.classList.add("hidden");
-              calendarView.classList.remove("hidden");
-            }
+            activateView(button.getAttribute('data-view') || 'guide');
           });
         });
+        
+        // Escuchar evento del bottom nav
+        window.addEventListener('change-view', (e) => {
+          activateView(e.detail);
+        });
+
+        // Botón de usuario móvil
+        const mobileUserBtn = document.getElementById('mobile-user-menu-btn');
+        if (mobileUserBtn) {
+          mobileUserBtn.addEventListener('click', () => {
+            const authApi = window.authModal;
+            const isAuth = !!(authApi && typeof authApi.isAuthenticated === 'function' && authApi.isAuthenticated());
+
+            if (isAuth) {
+              const logoutModal = document.getElementById('logout-modal');
+              if (logoutModal) logoutModal.classList.remove('hidden');
+            } else {
+              const authModal = document.getElementById('auth-modal');
+              if (authModal) authModal.classList.remove('hidden');
+            }
+          });
+        }
       });
+    </script>
+
+    <script>
+      import { auth, getProgressData } from '../utils/firebase';
+      import { onAuthStateChanged } from 'firebase/auth';
+      
+      // Función para cargar datos de progreso
+      let progressDataLoaded = false;
+      
+      async function loadProgressData() {
+        if (progressDataLoaded) return; // Ya se cargó, no volver a cargar
+        
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+              const loadingEl = document.getElementById('progress-loading');
+              if (loadingEl) {
+                loadingEl.innerHTML = `
+                  <p style="margin-bottom: 1rem;">🔒 Inicia sesión para ver tu progreso</p>
+                  <button 
+                    onclick="window.dispatchEvent(new CustomEvent('open-auth-modal'))"
+                    style="
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      border: none;
+                      padding: 1rem 2rem;
+                      border-radius: 12px;
+                      font-size: 1rem;
+                      font-weight: 600;
+                      cursor: pointer;
+                      transition: all 0.3s ease;
+                    "
+                  >
+                    Iniciar Sesión
+                  </button>
+                `;
+              }
+              return;
+            }
+
+            try {
+              const progressData = await getProgressData();
+              
+              if (!progressData) {
+                const loadingEl = document.getElementById('progress-loading');
+                if (loadingEl) {
+                  loadingEl.innerHTML = `<p>Error cargando datos. Intenta de nuevo.</p>`;
+                }
+                return;
+              }
+
+              progressDataLoaded = true;
+
+              // Ocultar loading y mostrar contenido
+              const loadingEl = document.getElementById('progress-loading');
+              const contentEl = document.getElementById('progress-content');
+              if (loadingEl) loadingEl.style.display = 'none';
+              if (contentEl) contentEl.style.display = 'block';
+
+              // Actualizar racha actual
+              const streakNumber = document.getElementById('streak-number');
+              if (streakNumber) {
+                streakNumber.textContent = String(progressData.currentStreak);
+              }
+
+              // Mensaje motivacional según racha
+              const streakMessage = document.getElementById('streak-message');
+              if (streakMessage) {
+                if (progressData.currentStreak === 0) {
+                  streakMessage.textContent = '¡Comienza tu racha hoy!';
+                } else if (progressData.currentStreak < 3) {
+                  streakMessage.textContent = '¡Buen comienzo! 💪';
+                } else if (progressData.currentStreak < 7) {
+                  streakMessage.textContent = '¡Vas muy bien! 🌟';
+                } else if (progressData.currentStreak < 30) {
+                  streakMessage.textContent = '¡Increíble constancia! 🚀';
+                } else {
+                  streakMessage.textContent = '¡Eres una leyenda! 👑';
+                }
+              }
+
+              // Actualizar récord personal
+              const longestStreakEl = document.getElementById('longest-streak');
+              if (longestStreakEl) {
+                longestStreakEl.textContent = String(progressData.longestStreak);
+              }
+
+              // Total completadas
+              const totalCompletionsEl = document.getElementById('total-completions');
+              if (totalCompletionsEl) {
+                totalCompletionsEl.textContent = String(progressData.totalCompletions);
+              }
+
+              // Días activos
+              const daysActive = Object.keys(progressData.completions).length;
+              const daysActiveEl = document.getElementById('days-active');
+              if (daysActiveEl) {
+                daysActiveEl.textContent = String(daysActive);
+              }
+
+              // Tasa de éxito
+              const possibleCompletions = daysActive * 2;
+              const completionRate = possibleCompletions > 0 
+                ? Math.round((progressData.totalCompletions / possibleCompletions) * 100)
+                : 0;
+              const completionRateEl = document.getElementById('completion-rate');
+              if (completionRateEl) {
+                completionRateEl.textContent = `${completionRate}%`;
+              }
+
+              // Progreso semanal (últimos 7 días)
+              const today = new Date();
+              const last7Days = [];
+              let weekCompletions = 0;
+              
+              for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                last7Days.push({ date: dateStr, data: progressData.completions[dateStr] });
+                
+                const dayData = progressData.completions[dateStr];
+                if (dayData) {
+                  if (dayData.morning?.completed) weekCompletions++;
+                  if (dayData.night?.completed) weekCompletions++;
+                }
+              }
+
+              const weekPercentage = (weekCompletions / 14) * 100;
+              const progressBarEl = document.getElementById('progress-bar');
+              if (progressBarEl) {
+                progressBarEl.style.width = `${weekPercentage}%`;
+              }
+              const progressTextEl = document.getElementById('progress-text');
+              if (progressTextEl) {
+                progressTextEl.textContent = `${weekCompletions} de 14 rutinas completadas`;
+              }
+
+              // Mini calendario de última semana
+              const weekCalendar = document.getElementById('week-calendar');
+              const dayNames = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+              
+              if (weekCalendar) {
+                weekCalendar.innerHTML = ''; // Limpiar antes de llenar
+                last7Days.forEach((day, index) => {
+                  const cell = document.createElement('div');
+                  cell.className = 'day-cell';
+                  
+                  const dayData = day.data;
+                  const morningDone = dayData?.morning?.completed;
+                  const nightDone = dayData?.night?.completed;
+                  
+                  if (morningDone && nightDone) {
+                    cell.classList.add('completed');
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span>✅`;
+                  } else if (morningDone || nightDone) {
+                    cell.classList.add('partial');
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span>⚡`;
+                  } else {
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span>-`;
+                  }
+                  
+                  if (index === 6) {
+                    cell.classList.add('today');
+                  }
+                  
+                  weekCalendar.appendChild(cell);
+                });
+              }
+
+            } catch (error) {
+              console.error('Error cargando progreso:', error);
+              const loadingEl = document.getElementById('progress-loading');
+              if (loadingEl) {
+                loadingEl.innerHTML = `<p>Error cargando datos. Intenta de nuevo.</p>`;
+              }
+            }
+          });
+      }
+      
+      // Hacer la función disponible globalmente
+      (window as any).loadProgressData = loadProgressData;
     </script>
 
     <script is:inline>
@@ -578,37 +1251,155 @@ const jsRoutineType = isDayTime ? "diurno" : "nocturno";
         }
 
         initReminders();
-        // Función para marcar rutina como completada
-        function markRoutineCompleted(routineType) {
-          const todayKey = new Date().toISOString().split("T")[0];
-          let completed = JSON.parse(localStorage.getItem("completedRoutines") || "{}");
-          if (!completed[todayKey]) completed[todayKey] = [];
-          if (!completed[todayKey].includes(routineType)) {
-            completed[todayKey].push(routineType);
-            localStorage.setItem("completedRoutines", JSON.stringify(completed));
+        
+        // ==================== SEGUIMIENTO DE RUTINAS CON FIREBASE ====================
+        
+        // Función para marcar rutina como completada en Firebase
+        async function markRoutineCompleted(routineType) {
+          try {
+            const { markRoutineComplete, getProgressData } = await import('./src/utils/firebase.ts');
+            const todayKey = new Date().toISOString().split("T")[0];
+            const firestoreRoutineType = routineType === "diurno" ? "morning" : "night";
+            
+            await markRoutineComplete(todayKey, firestoreRoutineType);
+            
+            // Actualizar UI
+            btnComplete.disabled = true;
+            btnComplete.textContent = "✅ Rutina completada";
+            btnComplete.style.opacity = "0.6";
+            btnComplete.style.cursor = "not-allowed";
+            
+            // Badge removido - ahora en /progreso
+            
+            showToast(`¡Rutina ${routineType} completada! 🎉 Ve a Progreso para ver tu racha.`);
+          } catch (error) {
+            console.error('Error marcando rutina:', error);
+            showToast('Error al marcar rutina. ¿Estás conectado?');
           }
         }
+        
         // Botón marcar como completada
-        const btnComplete=document.getElementById("mark-completed");
-        // Recalcular isDayTime en el cliente
-        const now = new Date();
-        const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
-        const isDayTimeClient = madridHour >= 6 && madridHour < 20;
-        const routineType = isDayTimeClient ? "diurno":"nocturno";
-        const todayKey = new Date().toISOString().split("T")[0];
-        const completed=JSON.parse(localStorage.getItem("completedRoutines")||"{}");
-        if(completed[todayKey]?.includes(routineType)){btnComplete.disabled=true; btnComplete.textContent="✅ Rutina completada"; btnComplete.style.opacity=0.6;}
-        btnComplete?.addEventListener("click",()=>{markRoutineCompleted(routineType);btnComplete.disabled=true; btnComplete.textContent="✅ Rutina completada"; btnComplete.style.opacity=0.6;});
+        const btnComplete = document.getElementById("mark-completed");
+        
+        // Verificar si ya está completada hoy (desde Firebase)
+        async function checkTodayCompletion() {
+          try {
+            const { isRoutineCompleted, getProgressData } = await import('./src/utils/firebase.ts');
+            const now = new Date();
+            const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
+            const isDayTimeClient = madridHour >= 6 && madridHour < 20;
+            const routineType = isDayTimeClient ? "diurno" : "nocturno";
+            const firestoreRoutineType = isDayTimeClient ? "morning" : "night";
+            const todayKey = new Date().toISOString().split("T")[0];
+            
+            const completed = await isRoutineCompleted(todayKey, firestoreRoutineType);
+            
+            if (completed) {
+              btnComplete.disabled = true;
+              btnComplete.textContent = "✅ Rutina completada";
+              btnComplete.style.opacity = "0.6";
+              btnComplete.style.cursor = "not-allowed";
+            }
+            
+            // Badge removido - ahora en /progreso
+            
+            // Configurar listener del botón
+            btnComplete?.addEventListener("click", () => {
+              if (!btnComplete.disabled) {
+                markRoutineCompleted(routineType);
+              }
+            });
+          } catch (error) {
+            console.error('Error verificando completado:', error);
+            // Fallback: permitir marcar aunque haya error
+            const now = new Date();
+            const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
+            const isDayTimeClient = madridHour >= 6 && madridHour < 20;
+            const routineType = isDayTimeClient ? "diurno" : "nocturno";
+            btnComplete?.addEventListener("click", () => {
+              if (!btnComplete.disabled) {
+                markRoutineCompleted(routineType);
+              }
+            });
+          }
+        }
+        
+        checkTodayCompletion();
 
         // Exponer para debugging
         window.skincareReminders = {
           addReminderIn,
           loadReminders,
           cancelReminder,
-          markRoutineCompleted
+          markRoutineCompleted,
+          checkTodayCompletion
         };
         
       });
+
+      // 🔄 Recargar la lista de productos dinámicamente desde Firebase
+      async function reloadProductList() {
+        try {
+          const { getRoutines } = await import('./src/utils/firebase.ts');
+          const routineData = await getRoutines();
+          if (!routineData) return;
+
+          // Determinar si es de día o noche (hora Madrid)
+          const now = new Date();
+          const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
+          const isDayTime = madridHour >= 6 && madridHour < 20;
+
+          // Día de la semana en Madrid
+          const dayOfWeek = new Intl.DateTimeFormat("es-ES", {
+            timeZone: "Europe/Madrid",
+            weekday: "long",
+          }).format(now);
+          const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+
+          let products = [];
+          if (isDayTime) {
+            products = routineData.dailyRoutine.filter(p => p.enabled).sort((a, b) => a.step - b.step);
+          } else {
+            products = (routineData.nightlyRoutines[capitalizedDay] || [])
+              .filter(p => p.enabled)
+              .sort((a, b) => a.step - b.step);
+          }
+
+          // Renderizar productos
+          const productList = document.querySelector('.product-list');
+          if (productList && products.length > 0) {
+            productList.innerHTML = products.map(product => `
+              <div class="product-card" style="background-color: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.5rem; margin: 1rem 0; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: row; align-items: center; gap: 1.5rem; position: relative;">
+                <div class="step-badge" style="position: absolute; top: -10px; left: -10px; background-color: #00ffff; color: black; border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem;">${product.step}</div>
+                <img src="${product.image}" alt="${product.accessCode}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid #00ffff;" />
+                <div style="flex-grow: 1;">
+                  <h2 style="font-family: 'Phatt', sans-serif; font-size: 1.5rem; margin: 0; letter-spacing: 0.09em;">${product.title}</h2>
+                  <h3 style="font-size: 1rem; font-style: italic; opacity: 0.7; margin: 0.5rem 0;">Código de Acceso: ${product.accessCode}</h3>
+                  <p style="font-size: 1rem; line-height: 1.4; margin: 0.5rem 0; opacity: 0.9;"><strong>Función:</strong> ${product.function}</p>
+                  <p style="font-size: 1rem; line-height: 1.4; margin: 0.5rem 0; opacity: 0.9;"><strong>Modo de Empleo:</strong> ${product.usage}</p>
+                </div>
+              </div>
+            `).join('');
+          }
+        } catch (error) {
+          console.error('Error recargando productos:', error);
+        }
+      }
+
+      // Detectar cambios en rutinas y recargar automáticamente
+      window.addEventListener('routines-updated', async function() {
+        console.log('✅ Rutinas actualizadas detectadas. Recargando productos...');
+        await reloadProductList();
+        
+        // Mostrar notificación
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00ffff;color:#000;padding:12px 24px;border-radius:8px;z-index:9999;font-weight:bold;box-shadow:0 4px 12px rgba(0,255,255,0.5);';
+        toast.textContent = '✅ Rutinas actualizadas';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      });
     </script>
+
+    <BottomNav />
   </body>
 </html>

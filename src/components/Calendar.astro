@@ -1,18 +1,15 @@
 ---
-import { dailyRoutine, weeklyRoutine } from '../data/routines';
-
+// El Calendar ahora carga datos del cliente, no del servidor
 const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 const now = new Date();
 const todayFormatter = new Intl.DateTimeFormat('es-ES', {
-  timeZone: 'Europe/Madrid',
-  weekday: 'long'
+  timeZone: 'Europe/Madrid',
+  weekday: 'long'
 });
-const todayFull = todayFormatter.format(now); // Ejemplo: "jueves"
-const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1); // Ejemplo: "Jueves"
-
+const todayFull = todayFormatter.format(now);
+const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1);
 ---
-
 <div class="calendar-container">
   <div class="days-of-week">
     {days.map(day => (
@@ -27,34 +24,23 @@ const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1);
   <div class="daily-routine-display">
     <div class="routine-section">
       <h3 class="routine-title">PROTOCOLO DIURNO</h3>
-      <div class="routine-products-container">
-        {dailyRoutine.map(product => (
-          <div class="calendar-product">
-            <img src={product.image} alt={product.accessCode} />
-            <p>{product.accessCode}</p>
-          </div>
-        ))}
+      <div id="daily-routine-products" class="routine-products-container">
+        <!-- Se llenará dinámicamente desde el cliente -->
+        <p style="text-align:center;opacity:0.7;">Cargando...</p>
       </div>
     </div>
     <div class="routine-section">
       <h3 class="routine-title">PROTOCOLO NOCTURNO</h3>
       <div class="nightly-routines-wrapper">
-        {days.map(day => {
-          const routine = weeklyRoutine[day as keyof typeof weeklyRoutine];
-          return (
-            <div 
-              id={`nightly-products-${day.toLowerCase()}`} 
-              class={`nightly-products-container ${day !== capitalizedToday ? 'ocultar' : ''}`}
-            >
-              {routine.map(product => (
-                <div class="calendar-product">
-                  <img src={product.image} alt={product.accessCode} />
-                  <p>{product.accessCode}</p>
-                </div>
-              ))}
-            </div>
-          );
-        })}
+        {days.map(day => (
+          <div 
+            id={`nightly-products-${day.toLowerCase()}`} 
+            class={`nightly-products-container ${day !== capitalizedToday ? 'ocultar' : ''}`}
+          >
+            <!-- Se llenará dinámicamente desde el cliente -->
+            <p style="text-align:center;opacity:0.7;">Cargando...</p>
+          </div>
+        ))}
       </div>
     </div>
   </div>
@@ -113,35 +99,106 @@ const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1);
     align-items: center;
     gap: 1rem;
   }
-  .calendar-product {
+  :global(.calendar-product) {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
     width: 100%;
     background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
     border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 255, 255, 0.1);
   }
-  .calendar-product img {
+  :global(.calendar-product img) {
     width: 60px;
     height: 60px;
     object-fit: cover;
     border-radius: 50%;
+    border: 2px solid #00ffff;
+    flex-shrink: 0;
   }
-  .calendar-product p {
+  :global(.calendar-product p) {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    color: white;
+    flex-grow: 1;
   }
 </style>
 
-<script is:inline>
+<script>
+  import { getRoutines, waitForAuth } from '../utils/firebase';
+  
+  async function loadCalendarData() {
+    try {
+      // Esperar autenticación
+      const user = await waitForAuth();
+      if (!user) {
+        console.log('No hay usuario autenticado para el calendario');
+        return;
+      }
+
+      // Cargar rutinas desde Firebase
+      const routineData = await getRoutines();
+      if (!routineData) {
+        console.log('No hay rutinas guardadas');
+        return;
+      }
+
+      // Renderizar rutina diurna
+      const dailyContainer = document.getElementById('daily-routine-products');
+      if (dailyContainer && routineData.dailyRoutine) {
+        const dailyRoutine = routineData.dailyRoutine
+          .filter(p => p.enabled)
+          .sort((a, b) => a.step - b.step);
+        
+        if (dailyRoutine.length === 0) {
+          dailyContainer.innerHTML = '<p style="text-align:center;opacity:0.7;">No hay productos en la rutina diurna</p>';
+        } else {
+          dailyContainer.innerHTML = dailyRoutine.map(product => `
+            <div class="calendar-product">
+              <img src="${product.image}" alt="${product.accessCode}" />
+              <p>${product.accessCode}</p>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Renderizar rutinas nocturnas
+      const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+      days.forEach(day => {
+        const container = document.getElementById(`nightly-products-${day.toLowerCase()}`);
+        if (container && routineData.nightlyRoutines) {
+          const nightRoutine = (routineData.nightlyRoutines[day] || [])
+            .filter(p => p.enabled)
+            .sort((a, b) => a.step - b.step);
+          
+          if (nightRoutine.length === 0) {
+            container.innerHTML = '<p style="text-align:center;opacity:0.7;">No hay productos para este día</p>';
+          } else {
+            container.innerHTML = nightRoutine.map(product => `
+              <div class="calendar-product">
+                <img src="${product.image}" alt="${product.accessCode}" />
+                <p>${product.accessCode}</p>
+              </div>
+            `).join('');
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error cargando datos del calendario:', error);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const buttons = document.querySelectorAll('.day-button');
     const allNightlyRoutines = document.querySelectorAll('.nightly-products-container');
 
     buttons.forEach(button => {
       button.addEventListener('click', () => {
-        const day = button.dataset.day;
+        const day = (button as HTMLElement).dataset.day;
 
         // Quitar la clase 'active' de todos los botones
         buttons.forEach(btn => btn.classList.remove('active'));
@@ -157,6 +214,26 @@ const capitalizedToday = todayFull.charAt(0).toUpperCase() + todayFull.slice(1);
           routineToShow.classList.remove('ocultar');
         }
       });
+    });
+
+    // Cargar datos cuando se cargue la página
+    loadCalendarData();
+
+    // Escuchar cambios de autenticación y actualizar rutinas
+    window.addEventListener('auth-changed', () => {
+      // Recargar datos cuando cambia el usuario
+      loadCalendarData();
+    });
+
+    // Escuchar cambios de rutinas y recargar calendario
+    window.addEventListener('routines-updated', () => {
+      console.log('📅 Calendario detectó cambios en rutinas, recargando...');
+      loadCalendarData();
+    });
+
+    // Escuchar actualizaciones de rutinas desde el editor
+    window.addEventListener('routines-updated', () => {
+      loadCalendarData();
     });
   });
 </script>

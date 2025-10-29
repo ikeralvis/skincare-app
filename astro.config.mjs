@@ -24,4 +24,7 @@ export default defineConfig({
   ],
 
   adapter: netlify(),
+  devToolbar: {
+    enabled: false
+  }
 });
