@@ -15,6 +15,7 @@ import AuthModal from "../components/AuthModal.astro";
 import BottomNav from "../components/BottomNav.astro";
 import ReminderManager from "../components/ReminderManager.astro";
 import AchievementsPanel from "../components/AchievementsPanel.astro";
+import ChatWidget from "../components/ChatWidget.astro";
 
 const now = new Date();
 // 🔹 Hora de Madrid
@@ -641,6 +642,10 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       <div id="routines-view" class="hidden">
         <RoutineEditor />
       </div>
+
+      <div id="chat-view" class="hidden">
+        <ChatWidget />
+      </div>
     </main>
 
     <script is:inline>
@@ -685,6 +690,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         const calendarView = document.getElementById("calendar-view");
         const progressView = document.getElementById("progress-view");
         const routinesView = document.getElementById("routines-view");
+        const chatView = document.getElementById("chat-view");
 
         // Función para activar una vista
         function activateView(viewName) {
@@ -697,6 +703,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           calendarView.classList.add("hidden");
           progressView.classList.add("hidden");
           routinesView.classList.add("hidden");
+          chatView.classList.add("hidden");
           
           // Activar la vista correspondiente
           if (viewName === "guide") {
@@ -715,6 +722,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           } else if (viewName === "routines") {
             routinesView.classList.remove("hidden");
             document.querySelector('[data-view="routines"]')?.classList.add("active");
+          } else if (viewName === "chat") {
+            chatView.classList.remove("hidden");
+            document.querySelector('[data-view="chat"]')?.classList.add("active");
           }
         }
 

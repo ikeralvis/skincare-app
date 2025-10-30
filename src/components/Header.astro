@@ -13,6 +13,17 @@
     <nav class="main-nav">
       <button class="nav-link active" data-view="guide">Guía</button>
       <button class="nav-link" data-view="calendar">Calendario</button>
+      
+      <!-- Botón circular de Chat IA -->
+      <button class="chat-ai-btn nav-link" data-view="chat" title="Chat con IA">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="11" r="1" fill="currentColor"/>
+          <circle cx="8" cy="11" r="1" fill="currentColor"/>
+          <circle cx="16" cy="11" r="1" fill="currentColor"/>
+        </svg>
+      </button>
+      
       <button class="nav-link" data-view="progress">Progreso</button>
       <button class="nav-link" data-view="routines">Rutinas</button>
     </nav>
@@ -38,6 +49,7 @@
         if (authModal) authModal.classList.remove('hidden');
       }
     });
+
   });
 </script>
 
@@ -107,6 +119,7 @@
   .main-nav {
     display: flex;
     gap: 1.5rem;
+    align-items: center;
   }
 
   .nav-link {
@@ -130,6 +143,42 @@
   
   .nav-link:hover {
     opacity: 1;
+  }
+
+  /* Botón circular de Chat IA */
+  .chat-ai-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    border: 2px solid #ff6b6b;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    position: relative;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .chat-ai-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+  }
+
+  .chat-ai-btn:active {
+    transform: scale(1.05);
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    }
+    50% {
+      box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+    }
   }
 
   /* Ocultar header en móvil - solo usar bottom nav */

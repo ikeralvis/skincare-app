@@ -22,6 +22,19 @@
     <span class="nav-label">Calendario</span>
   </button>
 
+  <!-- Botón central destacado de Chat IA -->
+  <button class="nav-item nav-item-chat" data-view="chat">
+    <div class="chat-button-special">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="11" r="1" fill="currentColor"/>
+        <circle cx="8" cy="11" r="1" fill="currentColor"/>
+        <circle cx="16" cy="11" r="1" fill="currentColor"/>
+      </svg>
+    </div>
+    <span class="nav-label">Chat IA</span>
+  </button>
+
   <button class="nav-item" data-view="progress">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
@@ -97,6 +110,48 @@
     font-size: 0.7rem;
     font-weight: 500;
     letter-spacing: 0.02em;
+  }
+
+  /* Botón especial de Chat IA */
+  .nav-item-chat {
+    position: relative;
+  }
+
+  .chat-button-special {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.5);
+    transition: all 0.3s ease;
+    margin-bottom: 0.25rem;
+    border: 3px solid rgba(0, 0, 0, 0.3);
+    animation: pulse-glow-bottom 2s ease-in-out infinite;
+  }
+
+  .chat-button-special .nav-icon {
+    width: 28px;
+    height: 28px;
+    stroke: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+
+  .nav-item-chat:hover .chat-button-special,
+  .nav-item-chat.active .chat-button-special {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(255, 107, 107, 0.7);
+  }
+
+  @keyframes pulse-glow-bottom {
+    0%, 100% {
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.5);
+    }
+    50% {
+      box-shadow: 0 6px 30px rgba(255, 107, 107, 0.8);
+    }
   }
 
   /* Animación al pulsar */
