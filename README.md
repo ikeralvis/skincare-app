@@ -1,9 +1,9 @@
 # 🧴 Skincare App - Rutina de Cuidado Personal
 
-[![CI/CD Pipeline](https://github.com/USUARIO/skincare-app/actions/workflows/ci.yml/badge.svg)](https://github.com/USUARIO/skincare-app/actions/workflows/ci.yml)
-[![Lighthouse Performance](https://github.com/USUARIO/skincare-app/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/USUARIO/skincare-app/actions/workflows/lighthouse.yml)
-[![Security Scan](https://github.com/USUARIO/skincare-app/actions/workflows/security.yml/badge.svg)](https://github.com/USUARIO/skincare-app/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/USUARIO/skincare-app/branch/main/graph/badge.svg)](https://codecov.io/gh/USUARIO/skincare-app)
+[![CI/CD Pipeline](https://github.com/ikeralvis/skincare-app/actions/workflows/ci.yml/badge.svg)](https://github.com/ikeralvis/skincare-app/actions/workflows/ci.yml)
+[![Lighthouse Performance](https://github.com/ikeralvis/skincare-app/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/ikeralvis/skincare-app/actions/workflows/lighthouse.yml)
+[![Security Scan](https://github.com/ikeralvis/skincare-app/actions/workflows/security.yml/badge.svg)](https://github.com/ikeralvis/skincare-app/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/ikeralvis/skincare-app/branch/main/graph/badge.svg)](https://codecov.io/gh/ikeralvis/skincare-app)
 
 Aplicación web progresiva (PWA) para gestionar y hacer seguimiento de rutinas diarias y nocturnas de cuidado personal, con sistema de rachas, logros y recordatorios.
 
