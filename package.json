@@ -6,7 +6,15 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:all": "npm run test:unit && npm run test:e2e"
   },
   "dependencies": {
     "@astrojs/netlify": "^6.5.11",
@@ -15,6 +23,14 @@
     "preact": "^10.27.2"
   },
   "devDependencies": {
-    "@vite-pwa/astro": "^1.1.0"
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "^1.56.1",
+    "@testing-library/dom": "^10.4.1",
+    "@vite-pwa/astro": "^1.1.0",
+    "@vitest/coverage-v8": "^4.0.5",
+    "@vitest/ui": "^4.0.5",
+    "happy-dom": "^20.0.10",
+    "jsdom": "^27.0.1",
+    "vitest": "^4.0.5"
   }
 }
