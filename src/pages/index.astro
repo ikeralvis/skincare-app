@@ -816,6 +816,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                 return;
               }
 
+              // Guardar progreso para los logros
+              (window as any).currentProgressData = progressData;
+
               progressDataLoaded = true;
 
               // Ocultar loading y mostrar contenido
@@ -934,6 +937,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                   weekCalendar.appendChild(cell);
                 });
               }
+
+              // Disparar evento para actualizar logros
+              window.dispatchEvent(new CustomEvent('progress-updated'));
 
             } catch (error) {
               console.error('Error cargando progreso:', error);
@@ -1605,13 +1611,20 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
         grid.innerHTML = ACHIEVEMENTS.map(achievement => {
           const isUnlocked = unlockedIds.includes(achievement.id);
+          const rarityMap = {
+            'common': 'Común',
+            'rare': 'Raro',
+            'epic': 'Épico',
+            'legendary': 'Legendario'
+          };
           return `
-            <div class="achievement-item ${isUnlocked ? 'unlocked' : 'locked'}" 
-                 title="${achievement.description}">
-              <span class="achievement-rarity rarity-${achievement.rarity}">${achievement.rarity}</span>
-              <span class="achievement-icon">${achievement.icon}</span>
-              <h4 class="achievement-name">${achievement.name}</h4>
-              <p class="achievement-description">${achievement.description}</p>
+            <div class="achievement-item ${isUnlocked ? 'unlocked' : 'locked'}">
+              <div class="achievement-rarity rarity-${achievement.rarity}">${rarityMap[achievement.rarity] || achievement.rarity}</div>
+              <div class="achievement-icon">${achievement.icon}</div>
+              <div class="achievement-content">
+                <h4 class="achievement-name">${achievement.name}</h4>
+                <p class="achievement-description">${achievement.description}</p>
+              </div>
             </div>
           `;
         }).join('');
@@ -1649,6 +1662,17 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       document.addEventListener('DOMContentLoaded', () => {
         renderAchievements();
         renderCurrentChallenge();
+
+        // Toggle button for achievements panel
+        const achievementsToggleBtn = document.getElementById('toggle-achievements-section');
+        const achievementsContent = document.getElementById('achievements-content');
+        
+        if (achievementsToggleBtn && achievementsContent) {
+          achievementsToggleBtn.addEventListener('click', () => {
+            achievementsContent.classList.toggle('collapsed');
+            achievementsToggleBtn.classList.toggle('collapsed');
+          });
+        }
 
         // Update when progress changes
         window.addEventListener('progress-updated', () => {

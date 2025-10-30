@@ -6,14 +6,14 @@
 <div class="reminder-manager">
   <div class="reminder-header">
     <h3>⏰ Recordatorios</h3>
-    <button id="toggle-reminder-section" class="toggle-btn" aria-label="Expandir/Contraer">
+    <button id="toggle-reminder-section" class="toggle-btn collapsed" aria-label="Expandir/Contraer">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
         <path d="M5 7l5 5 5-5H5z"/>
       </svg>
     </button>
   </div>
 
-  <div id="reminder-content" class="reminder-content">
+  <div id="reminder-content" class="reminder-content collapsed">
     <!-- Quick Actions -->
     <div class="quick-reminders">
       <button class="quick-btn" data-minutes="10">
@@ -36,13 +36,16 @@
 
     <!-- Custom Time -->
     <form id="custom-reminder-form" class="custom-reminder-form">
-      <input 
-        type="time" 
-        id="reminder-time" 
-        name="time"
-        class="time-input"
-        required
-      />
+      <div class="input-group">
+        <label for="reminder-time" class="input-label">Hora:</label>
+        <input 
+          type="time" 
+          id="reminder-time" 
+          name="time"
+          class="time-input"
+          required
+        />
+      </div>
       <select id="reminder-type" name="type" class="type-select">
         <option value="morning">🌅 Mañana</option>
         <option value="evening">🌙 Noche</option>
@@ -75,7 +78,8 @@
     border: 1px solid rgba(147, 51, 234, 0.2);
     border-radius: 16px;
     padding: 1rem;
-    margin: 1rem 0;
+    margin: 1rem auto;
+    max-width: 600px;
     backdrop-filter: blur(10px);
   }
 
@@ -133,8 +137,14 @@
   /* Quick Reminders */
   .quick-reminders {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .quick-reminders {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .quick-btn {
@@ -171,18 +181,40 @@
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 120px;
+    max-width: 150px;
+  }
+
+  .input-label {
+    font-size: 0.875rem;
+    color: #c4b5fd;
+    font-weight: 500;
   }
 
   .time-input,
   .type-select {
     flex: 1;
-    min-width: 120px;
+    min-width: 100px;
+    width: 100%;
     background: rgba(30, 30, 46, 0.8);
     border: 1px solid rgba(147, 51, 234, 0.3);
     border-radius: 8px;
     padding: 0.75rem;
     color: #e9d5ff;
     font-size: 0.95rem;
+  }
+
+  .time-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
   }
 
   .time-input:focus,
@@ -265,6 +297,7 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    width: fit-content;
   }
 
   .reminder-actions {
@@ -351,6 +384,11 @@
 
   /* Responsive */
   @media (max-width: 640px) {
+    .reminder-manager {
+      padding: 0.75rem;
+      margin: 0.75rem auto;
+    }
+
     .quick-reminders {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -361,8 +399,10 @@
 
     .time-input,
     .type-select,
-    .add-btn {
+    .add-btn,
+    .input-group {
       width: 100%;
+      min-width: unset;
     }
   }
 </style>

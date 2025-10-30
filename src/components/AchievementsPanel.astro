@@ -6,42 +6,51 @@
 <div class="achievements-panel">
   <div class="panel-header">
     <h3>🏆 Logros y Desafíos</h3>
-    <div class="achievement-stats">
-      <span id="total-achievements">0/12</span>
+    <div class="header-actions">
+      <div class="achievement-stats">
+        <span id="total-achievements">0/12</span>
+      </div>
+      <button id="toggle-achievements-section" class="toggle-btn collapsed" aria-label="Expandir/Contraer">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M5 7l5 5 5-5H5z"/>
+        </svg>
+      </button>
     </div>
   </div>
 
-  <!-- Current Challenge -->
-  <div class="current-challenge">
-    <div class="challenge-header">
-      <span class="challenge-icon">🎯</span>
-      <h4>Desafío Actual</h4>
-    </div>
-    <div id="current-challenge-content" class="challenge-content">
-      <div class="challenge-card">
-        <div class="challenge-info">
-          <h5 id="challenge-title">Racha de 7 días</h5>
-          <p id="challenge-description">Completa tu rutina 7 días seguidos</p>
-        </div>
-        <div class="challenge-progress">
-          <div class="progress-bar">
-            <div id="challenge-progress-fill" class="progress-fill" style="width: 0%"></div>
+  <div id="achievements-content" class="achievements-content collapsed">
+    <!-- Current Challenge -->
+    <div class="current-challenge">
+      <div class="challenge-header">
+        <span class="challenge-icon">🎯</span>
+        <h4>Desafío Actual</h4>
+      </div>
+      <div id="current-challenge-content" class="challenge-content">
+        <div class="challenge-card">
+          <div class="challenge-info">
+            <h5 id="challenge-title">Racha de 7 días</h5>
+            <p id="challenge-description">Completa tu rutina 7 días seguidos</p>
           </div>
-          <span id="challenge-progress-text" class="progress-text">0/7 días</span>
-        </div>
-        <div class="challenge-reward">
-          <span class="reward-badge">
-            <span id="challenge-reward-icon">🔥</span>
-            <span id="challenge-reward-name">Legendario</span>
-          </span>
+          <div class="challenge-progress">
+            <div class="progress-bar">
+              <div id="challenge-progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <span id="challenge-progress-text" class="progress-text">0/7 días</span>
+          </div>
+          <div class="challenge-reward">
+            <span class="reward-badge">
+              <span id="challenge-reward-icon">🔥</span>
+              <span id="challenge-reward-name">Legendario</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Achievements Grid -->
-  <div class="achievements-grid" id="achievements-grid">
-    <!-- Se llenará dinámicamente -->
+    <!-- Achievements Grid -->
+    <div class="achievements-grid" id="achievements-grid">
+      <!-- Se llenará dinámicamente -->
+    </div>
   </div>
 
   <!-- Confetti Container -->
@@ -54,7 +63,8 @@
     border: 1px solid rgba(234, 179, 8, 0.2);
     border-radius: 16px;
     padding: 1rem;
-    margin: 1rem 0;
+    margin: 1rem auto;
+    max-width: 800px;
     position: relative;
     overflow: hidden;
   }
@@ -72,12 +82,56 @@
     color: #fef3c7;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   .achievement-stats {
     background: rgba(234, 179, 8, 0.2);
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-weight: 600;
     color: #fef3c7;
+    font-size: 0.9rem;
+  }
+
+  .toggle-btn {
+    background: rgba(234, 179, 8, 0.2);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fef3c7;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-btn:hover {
+    background: rgba(234, 179, 8, 0.3);
+    transform: scale(1.05);
+  }
+
+  .toggle-btn.collapsed svg {
+    transform: rotate(-90deg);
+  }
+
+  .achievements-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+  }
+
+  .achievements-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
   }
 
   /* Current Challenge */
@@ -192,8 +246,8 @@
   /* Achievements Grid */
   .achievements-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 
   .achievement-item {
@@ -201,11 +255,14 @@
     border: 1px solid rgba(100, 100, 120, 0.3);
     border-radius: 12px;
     padding: 1rem;
-    text-align: center;
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 
   .achievement-item.unlocked {
@@ -219,8 +276,8 @@
   }
 
   .achievement-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .achievement-item.unlocked:hover {
@@ -233,16 +290,26 @@
     display: block;
   }
 
+  .achievement-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
   .achievement-name {
     font-weight: 600;
     color: #fef3c7;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     margin-bottom: 0.25rem;
+    line-height: 1.3;
   }
 
   .achievement-description {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: #a8a29e;
+    line-height: 1.4;
   }
 
   .achievement-item.unlocked .achievement-description {
@@ -252,12 +319,13 @@
   .achievement-rarity {
     position: absolute;
     top: 0.5rem;
-    right: 0.5rem;
+    left: 0.5rem;
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    padding: 0.25rem 0.5rem;
+    padding: 0.3rem 0.6rem;
     border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
   .rarity-common {
@@ -302,9 +370,18 @@
 
   /* Responsive */
   @media (max-width: 640px) {
+    .achievements-panel {
+      padding: 0.75rem;
+      margin: 0.75rem auto;
+    }
+
     .achievements-grid {
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 0.75rem;
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .achievement-item {
+      padding: 0.75rem;
     }
 
     .achievement-icon {
@@ -312,7 +389,19 @@
     }
 
     .achievement-name {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    .achievement-description {
+      font-size: 0.75rem;
+    }
+
+    .header-actions {
+      gap: 0.5rem;
+    }
+
+    .current-challenge {
+      padding: 0.75rem;
     }
   }
 </style>

@@ -1,0 +1,150 @@
+---
+export const prerender = false;
+import Header from '../components/Header.astro';
+import Calendar from '../components/Calendar.astro';
+import AuthModal from '../components/AuthModal.astro';
+import BottomNav from '../components/BottomNav.astro';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendario - Skincare App</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      @font-face {
+        font-family: "Phatt";
+        src: url("/fonts/Phatt-Regular.woff2") format("woff2");
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        color: white;
+        min-height: 100vh;
+        overflow-x: hidden;
+        padding-bottom: 80px;
+      }
+
+      .main-content {
+        padding: 1rem;
+        padding-top: 80px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .page-title {
+        font-family: "Phatt", sans-serif;
+        font-size: 2rem;
+        color: #00ffff;
+        text-align: center;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      }
+
+      .page-description {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+      }
+
+      .auth-required {
+        text-align: center;
+        padding: 3rem 1rem;
+      }
+
+      .auth-required h2 {
+        color: #00ffff;
+        margin-bottom: 1rem;
+      }
+
+      .auth-required p {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 2rem;
+      }
+
+      .login-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+      }
+
+      @media (max-width: 768px) {
+        .page-title {
+          font-size: 1.5rem;
+        }
+        
+        .main-content {
+          padding: 0.5rem;
+          padding-top: 70px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <AuthModal />
+
+    <div class="main-content">
+      <h1 class="page-title">📅 CALENDARIO</h1>
+      <p class="page-description">
+        Visualiza tus rutinas programadas y planifica tu cuidado facial semanal.
+      </p>
+
+      <div id="auth-check" class="auth-required">
+        <h2>🔒 Acceso Requerido</h2>
+        <p>Inicia sesión para ver tu calendario personalizado</p>
+        <button class="login-btn" onclick="window.dispatchEvent(new CustomEvent('open-auth-modal'))">
+          Iniciar Sesión
+        </button>
+      </div>
+
+      <div id="calendar-container" style="display: none;">
+        <Calendar />
+      </div>
+    </div>
+
+    <BottomNav />
+
+    <script>
+      import { auth } from '../utils/firebase';
+      import { onAuthStateChanged } from 'firebase/auth';
+
+      const authCheckEl = document.getElementById('auth-check');
+      const calendarContainer = document.getElementById('calendar-container');
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          if (authCheckEl) authCheckEl.style.display = 'none';
+          if (calendarContainer) calendarContainer.style.display = 'block';
+        } else {
+          if (authCheckEl) authCheckEl.style.display = 'block';
+          if (calendarContainer) calendarContainer.style.display = 'none';
+        }
+      });
+    </script>
+  </body>
+</html>

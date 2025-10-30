@@ -10,6 +10,7 @@ export default [
       'dist/**',
       'node_modules/**',
       '.astro/**',
+      '.netlify/**',
       'coverage/**',
       'playwright-report/**',
       'test-results/**',
