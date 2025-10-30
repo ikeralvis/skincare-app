@@ -1,0 +1,368 @@
+---
+// src/components/ReminderManager.astro
+// Componente mejorado para gestión de recordatorios
+---
+
+<div class="reminder-manager">
+  <div class="reminder-header">
+    <h3>⏰ Recordatorios</h3>
+    <button id="toggle-reminder-section" class="toggle-btn" aria-label="Expandir/Contraer">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M5 7l5 5 5-5H5z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="reminder-content" class="reminder-content">
+    <!-- Quick Actions -->
+    <div class="quick-reminders">
+      <button class="quick-btn" data-minutes="10">
+        <span class="icon">🕐</span>
+        <span>10 min</span>
+      </button>
+      <button class="quick-btn" data-minutes="30">
+        <span class="icon">🕜</span>
+        <span>30 min</span>
+      </button>
+      <button class="quick-btn" data-minutes="60">
+        <span class="icon">🕐</span>
+        <span>1 hora</span>
+      </button>
+      <button class="quick-btn" data-minutes="480">
+        <span class="icon">🌙</span>
+        <span>8 horas</span>
+      </button>
+    </div>
+
+    <!-- Custom Time -->
+    <form id="custom-reminder-form" class="custom-reminder-form">
+      <input 
+        type="time" 
+        id="reminder-time" 
+        name="time"
+        class="time-input"
+        required
+      />
+      <select id="reminder-type" name="type" class="type-select">
+        <option value="morning">🌅 Mañana</option>
+        <option value="evening">🌙 Noche</option>
+        <option value="custom">⏰ Personalizado</option>
+      </select>
+      <button type="submit" class="add-btn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0a1 1 0 011 1v6h6a1 1 0 110 2H9v6a1 1 0 11-2 0V9H1a1 1 0 110-2h6V1a1 1 0 011-1z"/>
+        </svg>
+        Añadir
+      </button>
+    </form>
+
+    <!-- Active Reminders List -->
+    <div id="active-reminders" class="active-reminders">
+      <!-- Se llenará dinámicamente -->
+    </div>
+
+    <!-- Permission Notice -->
+    <div id="notification-permission" class="permission-notice" style="display: none;">
+      <p>🔔 Activa las notificaciones para recibir recordatorios</p>
+      <button id="request-permission-btn" class="permission-btn">Activar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .reminder-manager {
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 16px;
+    padding: 1rem;
+    margin: 1rem 0;
+    backdrop-filter: blur(10px);
+  }
+
+  .reminder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .reminder-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #e9d5ff;
+  }
+
+  .toggle-btn {
+    background: rgba(147, 51, 234, 0.2);
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #e9d5ff;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-btn:hover {
+    background: rgba(147, 51, 234, 0.3);
+    transform: scale(1.05);
+  }
+
+  .toggle-btn.collapsed svg {
+    transform: rotate(-90deg);
+  }
+
+  .reminder-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+  }
+
+  .reminder-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Quick Reminders */
+  .quick-reminders {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .quick-btn {
+    background: rgba(30, 30, 46, 0.8);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 12px;
+    padding: 0.75rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #e9d5ff;
+    font-size: 0.875rem;
+  }
+
+  .quick-btn:hover {
+    background: rgba(147, 51, 234, 0.2);
+    border-color: rgba(147, 51, 234, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .quick-btn:active {
+    transform: translateY(0);
+  }
+
+  .quick-btn .icon {
+    font-size: 1.5rem;
+  }
+
+  /* Custom Form */
+  .custom-reminder-form {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .time-input,
+  .type-select {
+    flex: 1;
+    min-width: 120px;
+    background: rgba(30, 30, 46, 0.8);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: #e9d5ff;
+    font-size: 0.95rem;
+  }
+
+  .time-input:focus,
+  .type-select:focus {
+    outline: none;
+    border-color: rgba(147, 51, 234, 0.6);
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+  }
+
+  .add-btn {
+    background: linear-gradient(135deg, #9333ea 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
+  }
+
+  /* Active Reminders */
+  .active-reminders {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .reminder-item {
+    background: rgba(30, 30, 46, 0.6);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .reminder-item:hover {
+    background: rgba(30, 30, 46, 0.8);
+    border-color: rgba(147, 51, 234, 0.4);
+  }
+
+  .reminder-info {
+    flex: 1;
+  }
+
+  .reminder-title {
+    color: #e9d5ff;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    font-size: 0.95rem;
+  }
+
+  .reminder-time {
+    color: #a78bfa;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .reminder-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .snooze-btn,
+  .delete-btn {
+    background: rgba(147, 51, 234, 0.2);
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .snooze-btn:hover {
+    background: rgba(147, 51, 234, 0.3);
+    transform: scale(1.1);
+  }
+
+  .delete-btn {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  .delete-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+    transform: scale(1.1);
+  }
+
+  /* Permission Notice */
+  .permission-notice {
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .permission-notice p {
+    margin: 0 0 0.75rem 0;
+    color: #fef3c7;
+  }
+
+  .permission-btn {
+    background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.5rem;
+    color: #111;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .permission-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.4);
+  }
+
+  /* Scrollbar */
+  .active-reminders::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .active-reminders::-webkit-scrollbar-track {
+    background: rgba(30, 30, 46, 0.4);
+    border-radius: 4px;
+  }
+
+  .active-reminders::-webkit-scrollbar-thumb {
+    background: rgba(147, 51, 234, 0.4);
+    border-radius: 4px;
+  }
+
+  .active-reminders::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 51, 234, 0.6);
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .quick-reminders {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .custom-reminder-form {
+      flex-direction: column;
+    }
+
+    .time-input,
+    .type-select,
+    .add-btn {
+      width: 100%;
+    }
+  }
+</style>

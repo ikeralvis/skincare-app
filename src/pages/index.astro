@@ -13,6 +13,8 @@ import ProductCard from "../components/ProductCard.astro";
 import RoutineEditor from "../components/RoutineEditor.astro";
 import AuthModal from "../components/AuthModal.astro";
 import BottomNav from "../components/BottomNav.astro";
+import ReminderManager from "../components/ReminderManager.astro";
+import AchievementsPanel from "../components/AchievementsPanel.astro";
 
 const now = new Date();
 // 🔹 Hora de Madrid
@@ -547,54 +549,8 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         <div class="centered-button" style="margin-bottom:16px;">
           <button id="mark-completed" type="button">Marcar como completada</button>
         </div>
-        <!-- CONTROLES DE RECORDATORIO -->
-        <div id="reminder-controls" style="margin-top:1rem; text-align:center;">
-          <p style="margin-bottom:8px; color: #ccc;">Recordatorios</p>
-
-          <div
-            style="display:flex;gap:8px;justify-content:center;margin-bottom:8px"
-          >
-            <button
-              id="rem-10"
-              style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer"
-              >10 min</button
-            >
-            <button
-              id="rem-30"
-              style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer"
-              >30 min</button
-            >
-            <button
-              id="rem-60"
-              style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer"
-              >1 h</button
-            >
-          </div>
-
-          <form
-            id="rem-custom-form"
-            style="display:flex;gap:8px;justify-content:center;align-items:center;"
-          >
-            <input
-              name="minutes"
-              type="number"
-              placeholder="Minutos"
-              min="1"
-              style="width:90px;padding:6px;border-radius:6px;border:1px solid #333;background:transparent;color:#fff;"
-            />
-            <button
-              type="submit"
-              style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer"
-              >Programar</button
-            >
-          </form>
-
-          <div
-            id="reminders-list"
-            style="margin-top:12px; max-width:480px; margin-left:auto; margin-right:auto; color:#ddd; font-size:0.95rem;"
-          >
-          </div>
-        </div>
+        <!-- NUEVO GESTOR DE RECORDATORIOS -->
+        <ReminderManager />
 
         <div class="product-list">
           {
@@ -632,6 +588,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
             <div class="streak-label">días de racha</div>
             <div class="streak-message" id="streak-message">¡Sigue así!</div>
           </div>
+
+          <!-- PANEL DE LOGROS Y DESAFÍOS -->
+          <AchievementsPanel />
 
           <!-- Grid de estadísticas -->
           <div class="stats-grid">
@@ -1464,6 +1423,238 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         toast.textContent = '✅ Rutinas actualizadas';
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
+      });
+    </script>
+
+    <script>
+      // ==================== NUEVO SISTEMA DE RECORDATORIOS Y LOGROS ====================
+      import {
+        initReminders,
+        addReminder,
+        deleteReminder,
+        snoozeReminder,
+        loadReminders,
+        requestNotificationPermission,
+        createReminder,
+        getTimeUntil,
+        formatReminderTime
+      } from '../utils/reminders';
+      import {
+        ACHIEVEMENTS,
+        getCurrentChallenge,
+        checkNewAchievements,
+        getUnlockedAchievements,
+        type UserStats
+      } from '../data/achievements';
+
+      // ==================== RECORDATORIOS ====================
+      
+      function renderReminders() {
+        const container = document.getElementById('active-reminders');
+        if (!container) return;
+
+        const reminders = loadReminders();
+        const activeReminders = reminders.filter(r => !r.fired && r.when > Date.now());
+
+        if (activeReminders.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; opacity: 0.6;">
+              <p style="color: #a78bfa;">No hay recordatorios activos</p>
+              <p style="font-size: 0.875rem; color: #9ca3af;">Programa uno para no olvidar tu rutina</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = activeReminders.map(reminder => `
+          <div class="reminder-item">
+            <div class="reminder-info">
+              <h4 class="reminder-title">${reminder.title}</h4>
+              <p class="reminder-time">
+                ⏰ ${formatReminderTime(reminder.when)}
+                <span style="opacity: 0.7; margin-left: 0.5rem;">(${getTimeUntil(reminder.when)})</span>
+              </p>
+            </div>
+            <div class="reminder-actions">
+              <button class="snooze-btn" onclick="handleSnooze('${reminder.id}')" title="Posponer 5 min">
+                💤
+              </button>
+              <button class="delete-btn" onclick="handleDeleteReminder('${reminder.id}')" title="Eliminar">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Handlers globales para los botones
+      (window as any).handleSnooze = (id: string) => {
+        snoozeReminder(id, 5);
+        renderReminders();
+      };
+
+      (window as any).handleDeleteReminder = (id: string) => {
+        deleteReminder(id);
+        renderReminders();
+      };
+
+      // Toggle reminder section
+      document.addEventListener('DOMContentLoaded', () => {
+        const toggleBtn = document.getElementById('toggle-reminder-section');
+        const content = document.getElementById('reminder-content');
+        
+        if (toggleBtn && content) {
+          toggleBtn.addEventListener('click', () => {
+            content.classList.toggle('collapsed');
+            toggleBtn.classList.toggle('collapsed');
+          });
+        }
+
+        // Quick reminder buttons
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const minutes = parseInt(btn.getAttribute('data-minutes') || '0');
+            if (minutes > 0) {
+              const when = Date.now() + minutes * 60 * 1000;
+              const reminder = createReminder('custom', when);
+              await addReminder(reminder);
+              renderReminders();
+            }
+          });
+        });
+
+        // Custom reminder form
+        const customForm = document.getElementById('custom-reminder-form');
+        if (customForm) {
+          customForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            const timeInput = form.querySelector('[name="time"]') as HTMLInputElement;
+            const typeSelect = form.querySelector('[name="type"]') as HTMLSelectElement;
+            
+            if (!timeInput.value) return;
+
+            const [hours, minutes] = timeInput.value.split(':').map(Number);
+            const now = new Date();
+            const targetTime = new Date();
+            targetTime.setHours(hours, minutes, 0, 0);
+
+            // Si la hora ya pasó hoy, programar para mañana
+            if (targetTime <= now) {
+              targetTime.setDate(targetTime.getDate() + 1);
+            }
+
+            const type = typeSelect.value as 'morning' | 'evening' | 'custom';
+            const reminder = createReminder(type, targetTime.getTime());
+            await addReminder(reminder);
+            renderReminders();
+            form.reset();
+          });
+        }
+
+        // Permission button
+        const permissionBtn = document.getElementById('request-permission-btn');
+        const permissionNotice = document.getElementById('notification-permission');
+        
+        if (permissionBtn && permissionNotice) {
+          // Check permission on load
+          if ('Notification' in window && Notification.permission === 'default') {
+            permissionNotice.style.display = 'block';
+          }
+
+          permissionBtn.addEventListener('click', async () => {
+            const permission = await requestNotificationPermission();
+            if (permission === 'granted') {
+              permissionNotice.style.display = 'none';
+            }
+          });
+        }
+
+        // Initialize reminders
+        initReminders();
+        renderReminders();
+
+        // Update reminders list every minute
+        setInterval(renderReminders, 60000);
+      });
+
+      // ==================== LOGROS Y DESAFÍOS ====================
+      
+      function getUserStats(): UserStats {
+        // TODO: Obtener stats reales de Firebase
+        const progressData = (window as any).currentProgressData || {};
+        
+        return {
+          currentStreak: progressData.currentStreak || 0,
+          longestStreak: progressData.longestStreak || 0,
+          totalDaysCompleted: progressData.totalDaysCompleted || 0,
+          perfectWeeks: 0, // TODO: calcular
+          morningRoutines: 0, // TODO: obtener de Firebase
+          nightRoutines: 0, // TODO: obtener de Firebase
+          consecutiveDays: progressData.currentStreak || 0,
+        };
+      }
+
+      function renderAchievements() {
+        const grid = document.getElementById('achievements-grid');
+        if (!grid) return;
+
+        const stats = getUserStats();
+        const unlockedAchievements = getUnlockedAchievements(stats);
+        const unlockedIds = unlockedAchievements.map(a => a.id);
+
+        grid.innerHTML = ACHIEVEMENTS.map(achievement => {
+          const isUnlocked = unlockedIds.includes(achievement.id);
+          return `
+            <div class="achievement-item ${isUnlocked ? 'unlocked' : 'locked'}" 
+                 title="${achievement.description}">
+              <span class="achievement-rarity rarity-${achievement.rarity}">${achievement.rarity}</span>
+              <span class="achievement-icon">${achievement.icon}</span>
+              <h4 class="achievement-name">${achievement.name}</h4>
+              <p class="achievement-description">${achievement.description}</p>
+            </div>
+          `;
+        }).join('');
+
+        // Update total
+        const totalElement = document.getElementById('total-achievements');
+        if (totalElement) {
+          totalElement.textContent = `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`;
+        }
+      }
+
+      function renderCurrentChallenge() {
+        const stats = getUserStats();
+        const challenge = getCurrentChallenge(stats.currentStreak);
+
+        const titleEl = document.getElementById('challenge-title');
+        const descEl = document.getElementById('challenge-description');
+        const progressFill = document.getElementById('challenge-progress-fill');
+        const progressText = document.getElementById('challenge-progress-text');
+        const rewardIcon = document.getElementById('challenge-reward-icon');
+        const rewardName = document.getElementById('challenge-reward-name');
+
+        if (titleEl) titleEl.textContent = challenge.title;
+        if (descEl) descEl.textContent = challenge.description;
+        
+        const progress = Math.min((challenge.current / challenge.target) * 100, 100);
+        if (progressFill) progressFill.style.width = `${progress}%`;
+        if (progressText) progressText.textContent = `${challenge.current}/${challenge.target} días`;
+        
+        if (rewardIcon) rewardIcon.textContent = challenge.reward.icon;
+        if (rewardName) rewardName.textContent = challenge.reward.name;
+      }
+
+      // Initialize achievements
+      document.addEventListener('DOMContentLoaded', () => {
+        renderAchievements();
+        renderCurrentChallenge();
+
+        // Update when progress changes
+        window.addEventListener('progress-updated', () => {
+          renderAchievements();
+          renderCurrentChallenge();
+        });
       });
     </script>
 

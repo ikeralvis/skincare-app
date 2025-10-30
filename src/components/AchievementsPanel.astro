@@ -1,0 +1,318 @@
+---
+// src/components/AchievementsPanel.astro
+// Panel de logros y desafíos dinámicos
+---
+
+<div class="achievements-panel">
+  <div class="panel-header">
+    <h3>🏆 Logros y Desafíos</h3>
+    <div class="achievement-stats">
+      <span id="total-achievements">0/12</span>
+    </div>
+  </div>
+
+  <!-- Current Challenge -->
+  <div class="current-challenge">
+    <div class="challenge-header">
+      <span class="challenge-icon">🎯</span>
+      <h4>Desafío Actual</h4>
+    </div>
+    <div id="current-challenge-content" class="challenge-content">
+      <div class="challenge-card">
+        <div class="challenge-info">
+          <h5 id="challenge-title">Racha de 7 días</h5>
+          <p id="challenge-description">Completa tu rutina 7 días seguidos</p>
+        </div>
+        <div class="challenge-progress">
+          <div class="progress-bar">
+            <div id="challenge-progress-fill" class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span id="challenge-progress-text" class="progress-text">0/7 días</span>
+        </div>
+        <div class="challenge-reward">
+          <span class="reward-badge">
+            <span id="challenge-reward-icon">🔥</span>
+            <span id="challenge-reward-name">Legendario</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Achievements Grid -->
+  <div class="achievements-grid" id="achievements-grid">
+    <!-- Se llenará dinámicamente -->
+  </div>
+
+  <!-- Confetti Container -->
+  <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+</div>
+
+<style>
+  .achievements-panel {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    border-radius: 16px;
+    padding: 1rem;
+    margin: 1rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .panel-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #fef3c7;
+  }
+
+  .achievement-stats {
+    background: rgba(234, 179, 8, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    color: #fef3c7;
+  }
+
+  /* Current Challenge */
+  .current-challenge {
+    background: rgba(30, 30, 46, 0.6);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .challenge-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .challenge-icon {
+    font-size: 1.5rem;
+  }
+
+  .challenge-header h4 {
+    margin: 0;
+    color: #fef3c7;
+    font-size: 1.1rem;
+  }
+
+  .challenge-card {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  .challenge-info h5 {
+    margin: 0 0 0.25rem 0;
+    color: #fef3c7;
+    font-size: 1.1rem;
+  }
+
+  .challenge-info p {
+    margin: 0;
+    color: #fcd34d;
+    font-size: 0.9rem;
+  }
+
+  .challenge-progress {
+    margin: 1rem 0;
+  }
+
+  .progress-bar {
+    background: rgba(30, 30, 46, 0.8);
+    border-radius: 20px;
+    height: 24px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+  }
+
+  .progress-fill {
+    background: linear-gradient(90deg, #eab308 0%, #f59e0b 100%);
+    height: 100%;
+    transition: width 0.5s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .progress-text {
+    display: block;
+    text-align: center;
+    color: #fcd34d;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .challenge-reward {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  .reward-badge {
+    background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%);
+    color: #111;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  /* Achievements Grid */
+  .achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+
+  .achievement-item {
+    background: rgba(30, 30, 46, 0.6);
+    border: 1px solid rgba(100, 100, 120, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .achievement-item.unlocked {
+    border-color: rgba(234, 179, 8, 0.5);
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+  }
+
+  .achievement-item.locked {
+    opacity: 0.5;
+    filter: grayscale(0.8);
+  }
+
+  .achievement-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .achievement-item.unlocked:hover {
+    border-color: rgba(234, 179, 8, 0.8);
+  }
+
+  .achievement-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .achievement-name {
+    font-weight: 600;
+    color: #fef3c7;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .achievement-description {
+    font-size: 0.75rem;
+    color: #a8a29e;
+  }
+
+  .achievement-item.unlocked .achievement-description {
+    color: #fcd34d;
+  }
+
+  .achievement-rarity {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+  }
+
+  .rarity-common {
+    background: rgba(156, 163, 175, 0.3);
+    color: #d1d5db;
+  }
+
+  .rarity-rare {
+    background: rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+  }
+
+  .rarity-epic {
+    background: rgba(168, 85, 247, 0.3);
+    color: #c4b5fd;
+  }
+
+  .rarity-legendary {
+    background: rgba(234, 179, 8, 0.3);
+    color: #fef3c7;
+  }
+
+  .achievement-unlock-animation {
+    animation: unlockPulse 0.6s ease;
+  }
+
+  @keyframes unlockPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* Confetti Canvas */
+  .confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .achievements-grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .achievement-icon {
+      font-size: 2rem;
+    }
+
+    .achievement-name {
+      font-size: 0.8rem;
+    }
+  }
+</style>
