@@ -18,15 +18,14 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
       
       - name: 📚 Install dependencies
         run: npm ci
       
       - name: 🔍 Run linting
-        run: npm run lint || echo "⚠️ Lint no configurado aún - continuando"
-        continue-on-error: true
+        run: npm run lint
 
   test-unit:
     name: 🧪 Unit Tests
@@ -39,7 +38,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
       
       - name: 📚 Install dependencies
@@ -83,7 +82,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
       
       - name: 📚 Install dependencies
@@ -135,7 +134,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
       
       - name: 📚 Install dependencies
