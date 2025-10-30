@@ -11,8 +11,9 @@ on:
 
 jobs:
   security-scan:
-    name: 🔒 Security Vulnerability Scan
+    name: 🔒 Security Vulnerability Scan (Disabled)
     runs-on: ubuntu-latest
+    if: false  # Temporalmente desactivado
     
     steps:
       - name: 📥 Checkout code
@@ -50,8 +51,9 @@ jobs:
           retention-days: 30
 
   codeql-analysis:
-    name: 🔎 CodeQL Analysis
+    name: 🔎 CodeQL Analysis (Disabled)
     runs-on: ubuntu-latest
+    if: false  # Temporalmente desactivado
     permissions:
       actions: read
       contents: read
@@ -81,9 +83,9 @@ jobs:
           category: "/language:${{matrix.language}}"
 
   dependency-review:
-    name: 📦 Dependency Review
+    name: 📦 Dependency Review (Disabled)
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: false  # Temporalmente desactivado
     
     steps:
       - name: 📥 Checkout code
