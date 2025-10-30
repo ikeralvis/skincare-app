@@ -545,21 +545,40 @@
     }
   }
 
-  // Event listeners
-  sendBtn?.addEventListener('click', handleSendMessage);
-  
-  chatInput?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  // Event listeners para el botón de enviar
+  if (sendBtn) {
+    // Click normal (PC y móvil)
+    sendBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       handleSendMessage();
-    }
-  });
+    });
+    
+    // Touch específico para móvil
+    sendBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSendMessage();
+    }, { passive: false });
+  }
+  
+  // Event listener para Enter en el textarea
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+  }
 
   // Focus automático al cargar la vista
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-      chatInput?.focus();
-      autoResizeTextarea();
+      if (chatInput) {
+        chatInput.focus();
+        autoResizeTextarea();
+      }
     }, 100);
   });
 </script>
