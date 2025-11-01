@@ -562,29 +562,44 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       @keyframes spin {
         to { transform: rotate(360deg); }
       }
-      /* 🔑 ESTILO MEJORADO DEL BOTÓN */
+      /* 🔑 ESTILOS DE BOTONES DE ACCIÓN */
+      .action-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      
       #mark-completed {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
         padding: 12px 24px;
-        font-size: 1.1rem;
-        color: #000;
-        background-color: #00ffff;
-        border: 2px solid #00ffff;
-        border-radius: 8px;
+        border-radius: 50px;
+        font-size: 0.95rem;
+        font-weight: 600;
         cursor: pointer;
-        transition:
-          background-color 0.2s,
-          color 0.2s,
-          box-shadow 0.2s;
-        text-transform: uppercase;
-        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
       }
+      
       #mark-completed:hover {
-        background-color: #00dddd;
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        background: linear-gradient(135deg, #5568d3 0%, #6941a0 100%);
       }
+      
       #mark-completed:active {
-        background-color: #00bbbb;
-        transform: translateY(1px);
+        transform: translateY(0);
+      }
+      
+      #mark-completed svg {
+        flex-shrink: 0;
       }
 
       /* Estilos de la lista de productos en columna */
@@ -815,11 +830,16 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
       <div id="guide-view">
         <h1 class="routine-title">{routineTitle}</h1>
-        <div class="centered-button" style="margin-bottom:16px;">
-          <button id="mark-completed" type="button">Marcar como completada</button>
+        <div class="action-buttons" style="margin-bottom:16px;">
+          <button id="mark-completed" type="button">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 0.5rem;">
+              <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+            </svg>
+            Completar Rutina
+          </button>
+          <!-- NUEVO GESTOR DE RECORDATORIOS -->
+          <ReminderManager />
         </div>
-        <!-- NUEVO GESTOR DE RECORDATORIOS -->
-        <ReminderManager />
 
         <div class="product-list">
           {
@@ -1236,12 +1256,12 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                   
                   if (morningDone && nightDone) {
                     cell.classList.add('completed');
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><strong style="font-size: 1.2rem; color: #000;">✓</strong>`;
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">✓</span>`;
                   } else if (morningDone || nightDone) {
                     cell.classList.add('partial');
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><strong style="font-size: 1rem; color: #000;">½</strong>`;
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">½</span>`;
                   } else {
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="font-size: 1rem; opacity: 0.4;">○</span>`;
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: rgba(255,255,255,0.7); font-size: 0.9rem; box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);">○</span>`;
                   }
                   
                   if (index === 6) {
