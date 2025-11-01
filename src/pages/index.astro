@@ -478,6 +478,70 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         margin-bottom: 0.25rem;
       }
 
+      /* Calendar Legend */
+      .calendar-legend {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 255, 255, 0.2);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .legend-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1rem;
+      }
+
+      .completed-icon {
+        background: linear-gradient(135deg, #00ff88 0%, #00ddaa 100%);
+        color: #000;
+        border: 1px solid #00ff88;
+      }
+
+      .partial-icon {
+        background: linear-gradient(135deg, #ffaa00 0%, #ff8800 100%);
+        color: #000;
+        border: 1px solid #ffaa00;
+      }
+
+      .empty-icon {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      @media (max-width: 640px) {
+        .calendar-legend {
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+
+        .legend-item {
+          font-size: 0.75rem;
+        }
+
+        .legend-icon {
+          width: 20px;
+          height: 20px;
+          font-size: 0.85rem;
+        }
+      }
+
       /* Loading state progreso */
       .progress-loading {
         text-align: center;
@@ -529,6 +593,204 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         flex-direction: column;
         gap: 1.5rem;
         padding-bottom: 1rem;
+      }
+
+      /* ==================== TOAST NOTIFICATIONS ==================== */
+      .toast-container {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        pointer-events: none;
+      }
+
+      @media (max-width: 768px) {
+        .toast-container {
+          top: 70px;
+          right: 10px;
+          left: 10px;
+          align-items: center;
+        }
+      }
+
+      .toast {
+        background: linear-gradient(135deg, rgba(20, 20, 35, 0.98) 0%, rgba(30, 30, 50, 0.98) 100%);
+        border: 2px solid rgba(0, 255, 255, 0.5);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        min-width: 300px;
+        max-width: 400px;
+        box-shadow: 
+          0 10px 40px rgba(0, 0, 0, 0.5),
+          0 0 20px rgba(0, 255, 255, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        pointer-events: auto;
+        animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      @keyframes slideInRight {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .toast.toast-exit {
+        animation: slideOutRight 0.3s ease-out forwards;
+      }
+
+      @keyframes slideOutRight {
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+
+      .toast::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #00ffff, #00cccc);
+        animation: progressBar 4s linear;
+      }
+
+      @keyframes progressBar {
+        from { width: 100%; }
+        to { width: 0%; }
+      }
+
+      .toast-icon {
+        font-size: 2rem;
+        flex-shrink: 0;
+        filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+        animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      @keyframes bounceIn {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+      }
+
+      .toast-content {
+        flex: 1;
+      }
+
+      .toast-title {
+        font-weight: 700;
+        color: #00ffff;
+        margin: 0 0 0.25rem 0;
+        font-size: 1rem;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      }
+
+      .toast-message {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+
+      .toast-close {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.2rem;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+      }
+
+      .toast-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: scale(1.1);
+      }
+
+      /* Variantes de toast */
+      .toast.success {
+        border-color: rgba(0, 255, 136, 0.6);
+        background: linear-gradient(135deg, rgba(0, 100, 50, 0.95) 0%, rgba(0, 150, 80, 0.95) 100%);
+      }
+
+      .toast.success::before {
+        background: linear-gradient(90deg, #00ff88, #00ddaa);
+      }
+
+      .toast.success .toast-title {
+        color: #00ff88;
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+      }
+
+      .toast.warning {
+        border-color: rgba(255, 170, 0, 0.6);
+        background: linear-gradient(135deg, rgba(100, 70, 0, 0.95) 0%, rgba(150, 100, 0, 0.95) 100%);
+      }
+
+      .toast.warning::before {
+        background: linear-gradient(90deg, #ffaa00, #ff8800);
+      }
+
+      .toast.warning .toast-title {
+        color: #ffaa00;
+        text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+      }
+
+      .toast.error {
+        border-color: rgba(255, 70, 70, 0.6);
+        background: linear-gradient(135deg, rgba(100, 20, 20, 0.95) 0%, rgba(150, 30, 30, 0.95) 100%);
+      }
+
+      .toast.error::before {
+        background: linear-gradient(90deg, #ff4646, #ff3333);
+      }
+
+      .toast.error .toast-title {
+        color: #ff4646;
+        text-shadow: 0 0 10px rgba(255, 70, 70, 0.5);
+      }
+
+      @media (max-width: 640px) {
+        .toast {
+          min-width: auto;
+          max-width: 100%;
+          padding: 0.875rem 1rem;
+        }
+
+        .toast-icon {
+          font-size: 1.5rem;
+        }
+
+        .toast-title {
+          font-size: 0.9rem;
+        }
+
+        .toast-message {
+          font-size: 0.8rem;
+        }
       }
     </style>
   </head>
@@ -640,6 +902,20 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
             <div class="calendar-preview-title">Últimos 7 días</div>
             <div class="week-grid" id="week-calendar">
               <!-- Se llena dinámicamente -->
+            </div>
+            <div class="calendar-legend">
+              <div class="legend-item">
+                <span class="legend-icon completed-icon">✓</span>
+                <span class="legend-text">Ambas rutinas</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-icon partial-icon">½</span>
+                <span class="legend-text">Una rutina</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-icon empty-icon">○</span>
+                <span class="legend-text">Sin completar</span>
+              </div>
             </div>
           </div>
         </div>
@@ -944,6 +1220,8 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
               const weekCalendar = document.getElementById('week-calendar');
               const dayNames = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
               
+              console.log('📅 Datos del calendario:', { last7Days, todayStr: today.toISOString().split('T')[0] });
+              
               if (weekCalendar) {
                 weekCalendar.innerHTML = ''; // Limpiar antes de llenar
                 last7Days.forEach((day, index) => {
@@ -954,14 +1232,16 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                   const morningDone = dayData?.morning?.completed;
                   const nightDone = dayData?.night?.completed;
                   
+                  console.log(`Día ${day.date}:`, { morningDone, nightDone, isToday: index === 6 });
+                  
                   if (morningDone && nightDone) {
                     cell.classList.add('completed');
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span>✅`;
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><strong style="font-size: 1.2rem; color: #000;">✓</strong>`;
                   } else if (morningDone || nightDone) {
                     cell.classList.add('partial');
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span>⚡`;
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><strong style="font-size: 1rem; color: #000;">½</strong>`;
                   } else {
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span>-`;
+                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="font-size: 1rem; opacity: 0.4;">○</span>`;
                   }
                   
                   if (index === 6) {
@@ -991,14 +1271,61 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       // ==================== FUNCIONES DE RUTINA ====================
       import { markRoutineComplete, isRoutineCompleted } from '../utils/firebase';
 
-      // Función para mostrar toast (debe estar definida en el scope global)
-      function showToast(message: string) {
-        if (typeof (window as any).showToast === 'function') {
-          (window as any).showToast(message);
-        } else {
-          alert(message);
-        }
+      // ==================== SISTEMA DE NOTIFICACIONES MEJORADO ====================
+      
+      interface ToastOptions {
+        type?: 'success' | 'warning' | 'error' | 'info';
+        title?: string;
+        icon?: string;
+        duration?: number;
       }
+
+      function showToast(message: string, options: ToastOptions = {}) {
+        const {
+          type = 'info',
+          title = type === 'success' ? '¡Éxito!' : type === 'warning' ? 'Atención' : type === 'error' ? 'Error' : 'Info',
+          icon = type === 'success' ? '🎉' : type === 'warning' ? '⚠️' : type === 'error' ? '❌' : 'ℹ️',
+          duration = 4000
+        } = options;
+
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        toast.innerHTML = `
+          <div class="toast-icon">${icon}</div>
+          <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+          </div>
+          <button class="toast-close" aria-label="Cerrar">×</button>
+        `;
+
+        container.appendChild(toast);
+
+        // Botón cerrar
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn?.addEventListener('click', () => removeToast(toast));
+
+        // Auto-remove
+        const timeout = setTimeout(() => removeToast(toast), duration);
+
+        // Limpiar timeout si se cierra manualmente
+        toast.setAttribute('data-timeout', String(timeout));
+      }
+
+      function removeToast(toast: HTMLElement) {
+        const timeoutId = toast.getAttribute('data-timeout');
+        if (timeoutId) clearTimeout(Number(timeoutId));
+        
+        toast.classList.add('toast-exit');
+        setTimeout(() => toast.remove(), 300);
+      }
+
+      // Hacer disponible globalmente
+      (window as any).showToast = showToast;
 
       // Función para marcar rutina como completada
       async function markRoutineCompleted(routineType: string) {
@@ -1012,7 +1339,10 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           });
           
           if (!user) {
-            showToast('⚠️ Debes iniciar sesión para marcar rutinas');
+            showToast('Debes iniciar sesión para marcar rutinas como completadas', { 
+              type: 'warning',
+              icon: '🔒'
+            });
             window.dispatchEvent(new CustomEvent('open-auth-modal'));
             return;
           }
@@ -1034,10 +1364,17 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           // Disparar evento para actualizar progreso
           window.dispatchEvent(new CustomEvent('routine-completed'));
           
-          showToast(`¡Rutina ${routineType} completada! 🎉 Ve a Progreso para ver tu racha.`);
+          showToast(`Rutina ${routineType} completada correctamente. ¡Sigue así!`, {
+            type: 'success',
+            title: '¡Excelente trabajo!',
+            icon: '🎉',
+            duration: 5000
+          });
         } catch (error) {
           console.error('Error marcando rutina:', error);
-          showToast('❌ Error al marcar rutina. Verifica tu conexión e intenta de nuevo.');
+          showToast('No se pudo marcar la rutina. Verifica tu conexión e intenta de nuevo.', {
+            type: 'error'
+          });
         }
       }
 
@@ -1057,7 +1394,10 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           if (!user) {
             // No autenticado, mostrar modal al hacer clic
             btnComplete?.addEventListener("click", () => {
-              showToast('⚠️ Debes iniciar sesión para marcar rutinas');
+              showToast('Debes iniciar sesión para marcar rutinas', {
+                type: 'warning',
+                icon: '🔒'
+              });
               window.dispatchEvent(new CustomEvent('open-auth-modal'));
             });
             return;
@@ -1124,42 +1464,20 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         return Notification.requestPermission();
       }
 
-      // Mostrar un toast en-app como fallback
-      function showToast(text) {
-        let t = document.getElementById("sk-toast");
-        if (!t) {
-          t = document.createElement("div");
-          t.id = "sk-toast";
-          Object.assign(t.style, {
-            position: "fixed",
-            bottom: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#111",
-            padding: "10px 14px",
-            borderRadius: "8px",
-            color: "#fff",
-            zIndex: 9999,
-            opacity: "1",
-          });
-          document.body.appendChild(t);
-        }
-        t.textContent = text;
-        t.style.opacity = "1";
-        clearTimeout(t._hideTimer);
-        t._hideTimer = setTimeout(() => (t.style.opacity = "0"), 4000);
-      }
-
       // Enviar notificación (intenta service worker, si no Notification())
       async function showNotification(title, body, data = {}) {
         if (!("Notification" in window)) {
-          showToast(body || title);
+          if (typeof window.showToast === 'function') {
+            window.showToast(body || title, { type: 'info', icon: '🔔' });
+          }
           return;
         }
 
         const permission = Notification.permission;
         if (permission !== "granted") {
-          showToast(body || title);
+          if (typeof window.showToast === 'function') {
+            window.showToast(body || title, { type: 'info', icon: '🔔' });
+          }
           return;
         }
 
@@ -1189,7 +1507,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           try {
             new Notification(title, options);
           } catch (err) {
-            showToast(body || title);
+            if (typeof window.showToast === 'function') {
+              window.showToast(body || title, { type: 'info', icon: '🔔' });
+            }
           }
         }
       }
@@ -1248,11 +1568,21 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
         // Pedimos permiso (si el usuario acepta, la notificación saldrá)
         requestNotificationPermission().then((perm) => {
-          if (perm !== "granted")
-            showToast(
-              "Permiso de notificaciones no concedido — usaré un aviso en la app."
-            );
-          else showToast("Recordatorio programado ✅");
+          if (perm !== "granted") {
+            if (typeof window.showToast === 'function') {
+              window.showToast("Activa las notificaciones para recibir recordatorios", {
+                type: 'warning',
+                icon: '🔔'
+              });
+            }
+          } else {
+            if (typeof window.showToast === 'function') {
+              window.showToast("Recordatorio programado correctamente", {
+                type: 'success',
+                icon: '⏰'
+              });
+            }
+          }
         });
 
         renderReminders();
@@ -1358,8 +1688,15 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           form.addEventListener("submit", (e) => {
             e.preventDefault();
             const minutes = parseInt(form.elements["minutes"].value, 10);
-            if (!minutes || minutes <= 0)
-              return showToast("Introduce un número válido de minutos");
+            if (!minutes || minutes <= 0) {
+              if (typeof window.showToast === 'function') {
+                window.showToast("Introduce un número válido de minutos", {
+                  type: 'warning',
+                  icon: '⚠️'
+                });
+              }
+              return;
+            }
             addReminderIn(minutes);
             form.reset();
           });
@@ -1715,6 +2052,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         });
       });
     </script>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
 
     <BottomNav />
   </body>

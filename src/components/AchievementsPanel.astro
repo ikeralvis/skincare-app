@@ -48,8 +48,11 @@
     </div>
 
     <!-- Achievements Grid -->
-    <div class="achievements-grid" id="achievements-grid">
-      <!-- Se llenará dinámicamente -->
+    <div class="achievements-section">
+      <h4 class="section-subtitle">🏅 Logros Disponibles</h4>
+      <div class="achievements-grid" id="achievements-grid">
+        <!-- Se llenará dinámicamente -->
+      </div>
     </div>
   </div>
 
@@ -243,73 +246,110 @@
     font-size: 0.9rem;
   }
 
+  /* Achievements Section */
+  .achievements-section {
+    margin-top: 1.5rem;
+  }
+
+  .section-subtitle {
+    color: #fef3c7;
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    font-weight: 600;
+    text-align: left;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(234, 179, 8, 0.3);
+  }
+
   /* Achievements Grid */
   .achievements-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 0.75rem;
   }
 
   .achievement-item {
-    background: rgba(30, 30, 46, 0.6);
-    border: 1px solid rgba(100, 100, 120, 0.3);
+    background: rgba(30, 30, 46, 0.8);
+    border: 2px solid rgba(100, 100, 120, 0.3);
     border-radius: 12px;
     padding: 1rem;
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
     align-items: center;
-    text-align: center;
+    gap: 1rem;
+    text-align: left;
+    min-height: 80px;
   }
 
   .achievement-item.unlocked {
-    border-color: rgba(234, 179, 8, 0.5);
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+    border-color: rgba(234, 179, 8, 0.6);
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(249, 115, 22, 0.15) 100%);
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.2);
   }
 
   .achievement-item.locked {
-    opacity: 0.5;
-    filter: grayscale(0.8);
+    opacity: 0.6;
+    filter: grayscale(0.7);
   }
 
   .achievement-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    border-color: rgba(234, 179, 8, 0.4);
   }
 
   .achievement-item.unlocked:hover {
-    border-color: rgba(234, 179, 8, 0.8);
+    border-color: rgba(234, 179, 8, 0.9);
+    box-shadow: 0 6px 20px rgba(234, 179, 8, 0.3);
   }
 
   .achievement-icon {
     font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-    display: block;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .achievement-item.unlocked .achievement-icon {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
+    border-color: rgba(234, 179, 8, 0.5);
+    box-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
   }
 
   .achievement-content {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    gap: 0.35rem;
+    min-width: 0;
   }
 
   .achievement-name {
-    font-weight: 600;
+    font-weight: 700;
     color: #fef3c7;
-    font-size: 0.95rem;
-    margin-bottom: 0.25rem;
+    font-size: 1.05rem;
+    margin: 0;
     line-height: 1.3;
   }
 
   .achievement-description {
-    font-size: 0.8rem;
-    color: #a8a29e;
-    line-height: 1.4;
+    font-size: 0.875rem;
+    color: #9ca3af;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .achievement-item.unlocked .achievement-name {
+    color: #fef08a;
   }
 
   .achievement-item.unlocked .achievement-description {
@@ -317,15 +357,15 @@
   }
 
   .achievement-rarity {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    padding: 0.3rem 0.6rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    justify-self: end;
   }
 
   .rarity-common {
@@ -377,23 +417,31 @@
 
     .achievements-grid {
       grid-template-columns: 1fr;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
 
     .achievement-item {
       padding: 0.75rem;
+      gap: 0.5rem;
     }
 
     .achievement-icon {
       font-size: 2rem;
+      width: 45px;
+      height: 45px;
     }
 
     .achievement-name {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
 
     .achievement-description {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .achievement-rarity {
+      font-size: 0.6rem;
+      padding: 0.2rem 0.4rem;
     }
 
     .header-actions {
@@ -402,6 +450,10 @@
 
     .current-challenge {
       padding: 0.75rem;
+    }
+
+    .panel-header h3 {
+      font-size: 1.1rem;
     }
   }
 </style>
