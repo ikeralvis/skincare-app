@@ -194,6 +194,12 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .mobile-logo.visible {
+        opacity: 1;
       }
 
       .mobile-logo img {
@@ -664,6 +670,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       document.addEventListener("DOMContentLoaded", () => {
         const introScreen = document.getElementById("intro-screen");
         const mainContent = document.getElementById("main-content");
+        const bottomNav = document.getElementById("bottom-nav");
 
         // Verificar si ya se mostró la intro en esta sesión
         const introShown = sessionStorage.getItem('introShown');
@@ -672,12 +679,30 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           // Si ya se mostró, saltarla
           introScreen.classList.add("hidden");
           mainContent.style.display = "block";
+          // Mostrar navbar y logo móvil inmediatamente
+          if (bottomNav) {
+            bottomNav.style.display = "flex";
+            setTimeout(() => bottomNav.classList.add("visible"), 100);
+          }
+          const mobileLogo = document.querySelector('.mobile-logo');
+          if (mobileLogo) {
+            mobileLogo.classList.add('visible');
+          }
         } else {
           // Primera vez, mostrar intro
           setTimeout(() => {
             introScreen.classList.add("hidden");
             setTimeout(() => {
               mainContent.style.display = "block";
+              // Mostrar navbar y logo móvil después de que aparezca el contenido
+              if (bottomNav) {
+                bottomNav.style.display = "flex";
+                setTimeout(() => bottomNav.classList.add("visible"), 300);
+              }
+              const mobileLogo = document.querySelector('.mobile-logo');
+              if (mobileLogo) {
+                setTimeout(() => mobileLogo.classList.add('visible'), 300);
+              }
               // Marcar que ya se mostró
               sessionStorage.setItem('introShown', 'true');
             }, 1000);
@@ -767,8 +792,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
     </script>
 
     <script>
-      import { auth, getProgressData } from '../utils/firebase';
-      import { onAuthStateChanged } from 'firebase/auth';
+      import { auth, getProgressData, onAuthStateChanged, type User } from '../utils/firebase';
       
       // Función para cargar datos de progreso
       let progressDataLoaded = false;
@@ -788,7 +812,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           progressDataLoaded = false;
         }
         
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, async (user: User | null) => {
             if (!user) {
               const loadingEl = document.getElementById('progress-loading');
               if (loadingEl) {
@@ -981,7 +1005,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         try {
           // Verificar autenticación
           const user = await new Promise((resolve) => {
-            const unsubscribe = onAuthStateChanged(auth, (user) => {
+            const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
               unsubscribe();
               resolve(user);
             });
@@ -1022,7 +1046,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         try {
           // Verificar autenticación
           const user = await new Promise((resolve) => {
-            const unsubscribe = onAuthStateChanged(auth, (user) => {
+            const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
               unsubscribe();
               resolve(user);
             });

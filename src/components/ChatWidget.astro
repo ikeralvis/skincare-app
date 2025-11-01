@@ -325,11 +325,14 @@
   /* Responsive */
   @media (max-width: 768px) {
     .chat-widget {
-      height: calc(100vh - 200px);
+      /* Usar 100dvh (dynamic viewport height) que se ajusta al teclado */
+      height: 100dvh;
+      max-height: calc(100vh - 140px);
       max-width: 100%;
       padding: 0;
       display: flex;
       flex-direction: column;
+      position: relative;
     }
 
     /* Ocultar cabecera en móvil para ganar altura útil */
@@ -352,9 +355,14 @@
     .chat-messages {
       flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
       margin: 0 0.5rem;
       padding: 0.75rem;
+      padding-bottom: 1rem;
       min-height: 0;
+      /* Hacer scroll suave en móvil */
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
 
     .message-avatar {
@@ -371,13 +379,18 @@
 
     .chat-input-container {
       padding: 0.75rem 1rem;
+      /* Añadir padding para safe-area en iOS */
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
       gap: 0.5rem;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.9);
       backdrop-filter: blur(10px);
       border-top: 1px solid rgba(0, 255, 255, 0.2);
       margin: 0;
       flex-shrink: 0;
       border-radius: 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
     }
 
     .chat-input {
@@ -407,6 +420,43 @@
 
   .chat-message.sending .message-content {
     animation: slideUpIn 200ms ease-out;
+  }
+
+  /* Ajustes para pantallas muy pequeñas */
+  @media (max-width: 360px) {
+    .chat-messages {
+      margin: 0 0.25rem;
+      padding: 0.5rem;
+    }
+
+    .message-content {
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      max-width: 200px;
+    }
+
+    .chat-input-container {
+      padding: 0.5rem 0.75rem;
+      padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    }
+
+    .chat-input {
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .chat-send-btn {
+      width: 36px;
+      height: 36px;
+    }
+  }
+
+  /* Fix para iOS Safari */
+  @supports (-webkit-touch-callout: none) {
+    .chat-widget {
+      /* En iOS usar altura fija que se ajusta con el viewport */
+      height: -webkit-fill-available;
+    }
   }
 </style>
 
@@ -500,7 +550,14 @@
     
     if (chatMessages) {
       chatMessages.appendChild(messageDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // Hacer scroll suave al último mensaje
+      requestAnimationFrame(() => {
+        chatMessages.scrollTo({
+          top: chatMessages.scrollHeight,
+          behavior: 'smooth'
+        });
+      });
     }
 
     // Quitar la clase 'sending' al terminar la animación
@@ -572,13 +629,74 @@
     });
   }
 
-  // Focus automático al cargar la vista
+  // Focus automático al cargar la vista (solo en desktop)
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      if (chatInput) {
+    // No hacer autofocus en móviles para evitar que salte el teclado automáticamente
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile && chatInput) {
+      setTimeout(() => {
         chatInput.focus();
         autoResizeTextarea();
-      }
-    }, 100);
+      }, 100);
+    }
   });
+
+  // ==================== MANEJO DEL TECLADO MÓVIL ====================
+  
+  // Detectar cuando el teclado aparece y ajustar scroll
+  if (chatInput) {
+    chatInput.addEventListener('focus', () => {
+      // Pequeño delay para que el teclado se abra primero
+      setTimeout(() => {
+        // Hacer scroll al input para que sea visible
+        chatInput.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest',
+          inline: 'start' 
+        });
+        
+        // Asegurar que el último mensaje sea visible
+        if (chatMessages) {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      }, 300);
+    });
+
+    // Cuando el usuario escribe, mantener el scroll al final
+    chatInput.addEventListener('input', () => {
+      if (chatMessages) {
+        const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
+        if (isNearBottom) {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      }
+    });
+  }
+
+  // Manejar cambios en el tamaño de la ventana (cuando aparece/desaparece el teclado)
+  let lastHeight = window.innerHeight;
+  window.addEventListener('resize', () => {
+    const currentHeight = window.innerHeight;
+    const heightDiff = lastHeight - currentHeight;
+    
+    // Si la altura disminuyó significativamente, el teclado apareció
+    if (heightDiff > 150 && chatMessages) {
+      setTimeout(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 100);
+    }
+    
+    lastHeight = currentHeight;
+  });
+
+  // Prevenir que el teclado oculte el input (iOS específico)
+  if ('visualViewport' in window) {
+    window.visualViewport?.addEventListener('resize', () => {
+      if (document.activeElement === chatInput && chatMessages) {
+        setTimeout(() => {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+      }
+    });
+  }
 </script>

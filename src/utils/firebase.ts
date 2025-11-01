@@ -453,5 +453,6 @@ export function calculateStreak(completions: { [date: string]: DayCompletions })
   return { current: streak, dates: streakDates };
 }
 
-// Exportar auth para uso externo
-export { auth };
+// Exportar auth y funciones de Firebase para uso externo
+export { auth, onAuthStateChanged };
+export type { User };
