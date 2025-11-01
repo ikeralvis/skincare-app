@@ -563,6 +563,12 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         to { transform: rotate(360deg); }
       }
       /* 🔑 ESTILOS DE BOTONES DE ACCIÓN */
+      .action-buttons-wrapper {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      
       .action-buttons {
         display: flex;
         justify-content: center;
@@ -830,15 +836,17 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
       <div id="guide-view">
         <h1 class="routine-title">{routineTitle}</h1>
-        <div class="action-buttons" style="margin-bottom:16px;">
-          <button id="mark-completed" type="button">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 0.5rem;">
-              <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-            </svg>
-            Completar Rutina
-          </button>
-          <!-- NUEVO GESTOR DE RECORDATORIOS -->
-          <ReminderManager />
+        <div class="action-buttons-wrapper" style="margin-bottom:16px;">
+          <div class="action-buttons">
+            <button id="mark-completed" type="button">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 0.5rem;">
+                <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+              </svg>
+              Completar Rutina
+            </button>
+            <!-- NUEVO GESTOR DE RECORDATORIOS -->
+            <ReminderManager />
+          </div>
         </div>
 
         <div class="product-list">
@@ -1256,12 +1264,12 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                   
                   if (morningDone && nightDone) {
                     cell.classList.add('completed');
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">✓</span>`;
+                    cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">✓</span>`;
                   } else if (morningDone || nightDone) {
                     cell.classList.add('partial');
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">½</span>`;
+                    cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">½</span>`;
                   } else {
-                    cell.innerHTML = `<span class="day-name">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: rgba(255,255,255,0.7); font-size: 0.9rem; box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);">○</span>`;
+                    cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: rgba(255,255,255,0.7); font-size: 0.9rem; box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);">○</span>`;
                   }
                   
                   if (index === 6) {
