@@ -616,139 +616,160 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         padding-bottom: 1rem;
       }
 
-      /* ==================== TOAST NOTIFICATIONS ==================== */
+      /* ==================== TOAST NOTIFICATIONS (POP-UP MODAL) ==================== */
       .toast-container {
         position: fixed;
-        top: 80px;
-        right: 20px;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999999;
+        display: none;
+        align-items: center;
+        justify-content: center;
         pointer-events: none;
+      }
+      
+      .toast-container.has-toast {
+        display: flex;
+        pointer-events: auto;
+      }
+      
+      /* Overlay oscuro con blur */
+      .toast-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        z-index: 1;
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
       @media (max-width: 768px) {
         .toast-container {
-          top: 70px;
-          right: 10px;
-          left: 10px;
-          align-items: center;
+          padding: 1rem;
         }
       }
 
       .toast {
-        background: linear-gradient(135deg, rgba(20, 20, 35, 0.98) 0%, rgba(30, 30, 50, 0.98) 100%);
-        border: 2px solid rgba(0, 255, 255, 0.5);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        min-width: 300px;
-        max-width: 400px;
+        background: linear-gradient(135deg, rgba(20, 20, 40, 0.98) 0%, rgba(30, 30, 55, 0.98) 100%);
+        border: 3px solid rgba(0, 255, 255, 0.7);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        min-width: 320px;
+        max-width: 500px;
         box-shadow: 
-          0 10px 40px rgba(0, 0, 0, 0.5),
-          0 0 20px rgba(0, 255, 255, 0.3),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
+          0 20px 60px rgba(0, 0, 0, 0.9),
+          0 0 40px rgba(0, 255, 255, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        /* Sin blur para mantener el texto nítido */
         pointer-events: auto;
-        animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        animation: modalIn 280ms ease-out;
         display: flex;
+        flex-direction: column;
         align-items: center;
+        text-align: center;
         gap: 1rem;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
+        z-index: 2;
+        will-change: transform, opacity;
+        transform: translateY(0);
       }
 
-      @keyframes slideInRight {
-        from {
-          transform: translateX(400px);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
+      @keyframes modalIn {
+        from { transform: translateY(10px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
       }
 
       .toast.toast-exit {
-        animation: slideOutRight 0.3s ease-out forwards;
+        animation: modalOut 200ms ease-in forwards;
       }
 
-      @keyframes slideOutRight {
-        to {
-          transform: translateX(400px);
-          opacity: 0;
+      @keyframes modalOut {
+        to { transform: translateY(6px); opacity: 0; }
+      }
+
+      @media (max-width: 768px) {
+        .toast {
+          min-width: unset;
+          width: 90%;
+          max-width: calc(100vw - 2rem);
+          padding: 1.75rem 1.5rem;
         }
       }
 
-      .toast::before {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #00ffff, #00cccc);
-        animation: progressBar 4s linear;
-      }
-
-      @keyframes progressBar {
-        from { width: 100%; }
-        to { width: 0%; }
-      }
-
       .toast-icon {
-        font-size: 2rem;
+        font-size: 4rem;
         flex-shrink: 0;
-        filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+        filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.8));
         animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        margin-bottom: 0.5rem;
       }
 
       @keyframes bounceIn {
-        0% { transform: scale(0); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
+        0% { transform: scale(0) rotate(-180deg); }
+        50% { transform: scale(1.3) rotate(10deg); }
+        100% { transform: scale(1) rotate(0deg); }
       }
 
       .toast-content {
-        flex: 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
       }
 
       .toast-title {
         font-weight: 700;
         color: #00ffff;
-        margin: 0 0 0.25rem 0;
-        font-size: 1rem;
-        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        margin: 0;
+        font-size: 1.5rem;
+        text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+        letter-spacing: 0.5px;
       }
 
       .toast-message {
-        color: rgba(255, 255, 255, 0.9);
+        color: rgba(255, 255, 255, 0.95);
         margin: 0;
-        font-size: 0.875rem;
-        line-height: 1.4;
+        font-size: 1rem;
+        line-height: 1.6;
+        font-weight: 400;
       }
 
       .toast-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
         background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 6px;
-        width: 24px;
-        height: 24px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.5rem;
         line-height: 1;
-        flex-shrink: 0;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
       }
 
       .toast-close:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 68, 68, 0.3);
+        border-color: rgba(255, 68, 68, 0.6);
         color: white;
-        transform: scale(1.1);
+        transform: rotate(90deg) scale(1.1);
       }
 
       /* Variantes de toast */
@@ -963,12 +984,12 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
           .register("/sw.js")
-          .then((reg) =>
-            console.log("Service Worker registrado con éxito:", reg.scope)
-          )
-          .catch((err) =>
-            console.error("Error al registrar Service Worker:", err)
-          );
+          .then(() => {
+            /* registro SW OK */
+          })
+          .catch((err) => {
+            console.error("Error al registrar Service Worker:", err);
+          });
       } // FIN DEL FIX PWA
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -1248,7 +1269,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
               const weekCalendar = document.getElementById('week-calendar');
               const dayNames = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
               
-              console.log('📅 Datos del calendario:', { last7Days, todayStr: today.toISOString().split('T')[0] });
+              /* datos calendario cargados */
               
               if (weekCalendar) {
                 weekCalendar.innerHTML = ''; // Limpiar antes de llenar
@@ -1260,7 +1281,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                   const morningDone = dayData?.morning?.completed;
                   const nightDone = dayData?.night?.completed;
                   
-                  console.log(`Día ${day.date}:`, { morningDone, nightDone, isToday: index === 6 });
+                  /* día procesado */
                   
                   if (morningDone && nightDone) {
                     cell.classList.add('completed');
@@ -1313,43 +1334,63 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           type = 'info',
           title = type === 'success' ? '¡Éxito!' : type === 'warning' ? 'Atención' : type === 'error' ? 'Error' : 'Info',
           icon = type === 'success' ? '🎉' : type === 'warning' ? '⚠️' : type === 'error' ? '❌' : 'ℹ️',
-          duration = 4000
+          duration = 5000
         } = options;
 
         const container = document.getElementById('toast-container');
         if (!container) return;
 
+        // Limpiar toasts anteriores
+        container.innerHTML = '';
+        
+        // Añadir clase para mostrar overlay
+        container.classList.add('has-toast');
+
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         
         toast.innerHTML = `
+          <button class="toast-close" aria-label="Cerrar">×</button>
           <div class="toast-icon">${icon}</div>
           <div class="toast-content">
             <div class="toast-title">${title}</div>
             <div class="toast-message">${message}</div>
           </div>
-          <button class="toast-close" aria-label="Cerrar">×</button>
         `;
 
         container.appendChild(toast);
 
         // Botón cerrar
         const closeBtn = toast.querySelector('.toast-close');
-        closeBtn?.addEventListener('click', () => removeToast(toast));
+        closeBtn?.addEventListener('click', () => removeToast(toast, container));
+
+        // Click en overlay para cerrar
+        container.addEventListener('click', (e) => {
+          if (e.target === container) {
+            removeToast(toast, container);
+          }
+        });
 
         // Auto-remove
-        const timeout = setTimeout(() => removeToast(toast), duration);
+        const timeout = setTimeout(() => removeToast(toast, container), duration);
 
         // Limpiar timeout si se cierra manualmente
         toast.setAttribute('data-timeout', String(timeout));
       }
 
-      function removeToast(toast: HTMLElement) {
+      function removeToast(toast: HTMLElement, container: HTMLElement) {
         const timeoutId = toast.getAttribute('data-timeout');
         if (timeoutId) clearTimeout(Number(timeoutId));
         
         toast.classList.add('toast-exit');
-        setTimeout(() => toast.remove(), 300);
+        
+        setTimeout(() => {
+          toast.remove();
+          // Quitar overlay si no hay más toasts
+          if (container.children.length === 0) {
+            container.classList.remove('has-toast');
+          }
+        }, 300);
       }
 
       // Hacer disponible globalmente
@@ -1367,10 +1408,6 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           });
           
           if (!user) {
-            showToast('Debes iniciar sesión para marcar rutinas como completadas', { 
-              type: 'warning',
-              icon: '🔒'
-            });
             window.dispatchEvent(new CustomEvent('open-auth-modal'));
             return;
           }
@@ -1392,17 +1429,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           // Disparar evento para actualizar progreso
           window.dispatchEvent(new CustomEvent('routine-completed'));
           
-          showToast(`Rutina ${routineType} completada correctamente. ¡Sigue así!`, {
-            type: 'success',
-            title: '¡Excelente trabajo!',
-            icon: '🎉',
-            duration: 5000
-          });
+          // Sin toast: solo actualizar botón y estado
         } catch (error) {
-          console.error('Error marcando rutina:', error);
-          showToast('No se pudo marcar la rutina. Verifica tu conexión e intenta de nuevo.', {
-            type: 'error'
-          });
+          // Error silencioso (sin toast)
         }
       }
 
@@ -1420,12 +1449,8 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           const btnComplete = document.getElementById("mark-completed");
           
           if (!user) {
-            // No autenticado, mostrar modal al hacer clic
+            // No autenticado, mostrar modal al hacer clic (sin toast)
             btnComplete?.addEventListener("click", () => {
-              showToast('Debes iniciar sesión para marcar rutinas', {
-                type: 'warning',
-                icon: '🔒'
-              });
               window.dispatchEvent(new CustomEvent('open-auth-modal'));
             });
             return;
@@ -1819,7 +1844,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
       // Detectar cambios en rutinas y recargar automáticamente
       window.addEventListener('routines-updated', async function() {
-        console.log('✅ Rutinas actualizadas detectadas. Recargando productos...');
+  /* rutinas actualizadas detectadas */
         await reloadProductList();
         
         // Mostrar notificación
