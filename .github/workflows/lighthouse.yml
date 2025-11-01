@@ -62,7 +62,7 @@ jobs:
           runs: 3
       
       - name: 📊 Format Lighthouse Score
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -100,7 +100,7 @@ jobs:
           path: .lighthouseci/
       
       - name: 🎯 Check performance thresholds
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
