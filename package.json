@@ -34,7 +34,7 @@
     "@vite-pwa/astro": "^1.1.1",
     "@vitest/coverage-v8": "^4.0.6",
     "@vitest/ui": "^4.0.6",
-    "eslint": "^9.39.0",
+    "eslint": "^9.39.1",
     "eslint-plugin-astro": "^1.4.0",
     "happy-dom": "^20.0.10",
     "jsdom": "^27.1.0",
