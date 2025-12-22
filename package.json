@@ -19,9 +19,9 @@
     "test:all": "npm run test:unit && npm run test:e2e"
   },
   "dependencies": {
-    "@astrojs/netlify": "^6.6.0",
+    "@astrojs/netlify": "^6.6.3",
     "@google/genai": "^1.28.0",
-    "astro": "^5.15.3",
+    "astro": "^5.16.6",
     "firebase": "^12.5.0",
     "preact": "^10.27.2"
   },

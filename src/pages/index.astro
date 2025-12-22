@@ -44,35 +44,39 @@ let currentRoutine: Product[];
 try {
   const data = await getRoutines();
   routineData = data || createEmptyRoutineData();
-  
+
   if (isDayTime) {
-    currentRoutine = routineData.dailyRoutine.filter(p => p.enabled).sort((a, b) => a.step - b.step);
+    currentRoutine = routineData.dailyRoutine
+      .filter((p) => p.enabled)
+      .sort((a, b) => a.step - b.step);
   } else {
     currentRoutine = (routineData.nightlyRoutines[capitalizedDay] || [])
-      .filter(p => p.enabled)
+      .filter((p) => p.enabled)
       .sort((a, b) => a.step - b.step);
   }
-  
+
   // Si no hay rutinas guardadas, usar las hardcoded como fallback
   if (currentRoutine.length === 0) {
-    const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
+    const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(
+      dayOfWeek,
+    );
     const hardcodedRoutine = isDayTime
       ? hardcodedDaily
       : isLacticAcidDay
         ? hardcodedNightlyLactic
         : hardcodedNightlyWithout;
-    
+
     // Convertir al formato Product
     currentRoutine = hardcodedRoutine.map((item, index) => ({
       ...item,
       id: `fallback-${index}`,
-      routineType: isDayTime ? ('day' as const) : ('night' as const),
-      frequency: 'daily' as const,
+      routineType: isDayTime ? ("day" as const) : ("night" as const),
+      frequency: "daily" as const,
       enabled: true,
     }));
   }
 } catch (error) {
-  console.error('Error cargando rutinas:', error);
+  console.error("Error cargando rutinas:", error);
   // Fallback a rutinas hardcoded
   const isLacticAcidDay = ["lunes", "miércoles", "viernes"].includes(dayOfWeek);
   const hardcodedRoutine = isDayTime
@@ -80,13 +84,13 @@ try {
     : isLacticAcidDay
       ? hardcodedNightlyLactic
       : hardcodedNightlyWithout;
-  
+
   // Convertir al formato Product
   currentRoutine = hardcodedRoutine.map((item, index) => ({
     ...item,
     id: `fallback-${index}`,
-    routineType: isDayTime ? ('day' as const) : ('night' as const),
-    frequency: 'daily' as const,
+    routineType: isDayTime ? ("day" as const) : ("night" as const),
+    frequency: "daily" as const,
     enabled: true,
   }));
 }
@@ -116,15 +120,276 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         margin: 0;
         background-color: #000;
         color: #fff;
-        font-family: "Space Mono", monospace;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         min-height: 100vh;
-        background-image: radial-gradient(circle, #1a2a47, #000);
+        background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 100%);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
+      /* OPTIMIZACIONES GLOBALES PARA RENDIMIENTO */
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Optimización para móviles: desactivar efectos pesados */
+      @media (max-width: 768px) {
+        * {
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+
+        /* Desactivar animaciones pesadas */
+        .streak-card::before,
+        .progress-bar-fill::after {
+          display: none !important;
+          animation: none !important;
+        }
+
+        /* Fondos sólidos optimizados */
+        .mobile-logo,
+        .stat-card,
+        .progress-section,
+        .calendar-preview,
+        .manual-register-card {
+          background: rgba(15, 15, 30, 0.95) !important;
+          backdrop-filter: none !important;
+        }
+
+        .toast {
+          background: #1a1a2e !important;
+          border: 2px solid #00ffff !important;
+        }
+
+        /* Transiciones solo esenciales */
+        .intro-screen {
+          transition: opacity 0.3s ease !important;
+        }
+
+        /* Reducir sombras */
+        .streak-card,
+        .stat-card,
+        .manual-register-card {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+      }
+
+      /* === FORMULARIO REGISTRO MANUAL === */
+      .manual-register-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        border: 2px solid rgba(102, 126, 234, 0.4);
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .manual-register-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+
+      .manual-register-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #a78bfa;
+        margin: 0;
+      }
+
+      .manual-register-toggle {
+        background: rgba(167, 139, 250, 0.2);
+        border: 1px solid rgba(167, 139, 250, 0.4);
+        border-radius: 8px;
+        padding: 0.4rem 0.75rem;
+        color: #a78bfa;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .manual-register-toggle:hover {
+        background: rgba(167, 139, 250, 0.3);
+      }
+
+      .manual-register-form {
+        display: none;
+      }
+
+      .manual-register-form.visible {
+        display: block;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .form-group {
+        flex: 1;
+        min-width: 140px;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 0.35rem;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 0.65rem 0.75rem;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1.5px solid rgba(167, 139, 250, 0.3);
+        border-radius: 10px;
+        color: white;
+        font-size: 1rem;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #a78bfa;
+      }
+
+      .form-input[type="date"] {
+        color-scheme: dark;
+      }
+
+      .checkbox-group {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        padding: 0.85rem 1rem;
+        background: linear-gradient(135deg, rgba(20, 20, 40, 0.9) 0%, rgba(30, 30, 50, 0.9) 100%);
+        border: 1.5px solid rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .checkbox-item:active {
+        background: rgba(0, 255, 255, 0.1);
+      }
+
+      .checkbox-item:has(input:checked) {
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(0, 200, 200, 0.15) 100%);
+        border-color: #00ffff;
+      }
+
+      .checkbox-item input {
+        display: none;
+      }
+
+      .checkbox-item span {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .checkbox-icon {
+        font-size: 1.2rem;
+      }
+
+      .submit-manual-btn {
+        width: 100%;
+        padding: 0.85rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      .submit-manual-btn:active {
+        transform: scale(0.98);
+      }
+
+      .submit-manual-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* Acceso rápido días recientes */
+      .quick-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+      }
+
+      .quick-day-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0.25rem;
+        background: linear-gradient(135deg, rgba(20, 20, 40, 0.9) 0%, rgba(30, 30, 50, 0.9) 100%);
+        border: 1.5px solid rgba(0, 255, 255, 0.25);
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.75rem;
+        cursor: pointer;
+        text-align: center;
+        min-height: 52px;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .quick-day-btn:active {
+        background: rgba(0, 255, 255, 0.15);
+        border-color: #00ffff;
+      }
+
+      .quick-day-btn.selected {
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(0, 200, 200, 0.15) 100%);
+        border-color: #00ffff;
+        color: #00ffff;
+      }
+
+      .quick-day-btn .day-name {
+        display: block;
+        font-weight: 600;
+        font-size: 0.7rem;
+        margin-bottom: 2px;
+        color: #00ffff;
+      }
+
+      .quick-day-btn .day-date {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+
       .intro-screen {
         position: fixed;
         top: 0;
         left: 0;
-        width: 95%;
+        width: 100%;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -132,45 +397,31 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         align-items: center;
         text-align: center;
         opacity: 1;
-        transition:
-          opacity 1s,
-          visibility 1s;
+        transition: opacity 0.5s ease;
         z-index: 100;
+        background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 100%);
       }
       .intro-screen.hidden {
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
       }
-      h1 {
-        font-size: 2.5rem;
-        margin-bottom: 2rem;
-        animation: scan-text 1s linear infinite alternate;
+      .intro-screen h1 {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: #00ffff;
+        padding: 0 1rem;
       }
       .iris-scan {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
         border: 2px solid #00ffff;
         border-radius: 50%;
-        animation: iris-pulse 2s ease-in-out infinite;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
       }
-      @keyframes iris-pulse {
-        0% {
-          transform: scale(1);
-          box-shadow: 0 0 10px #00ffff;
-        }
-        100% {
-          transform: scale(1.5);
-          box-shadow: 0 0 20px #00ffff;
-        }
-      }
-      @keyframes scan-text {
-        0% {
-          transform: translateY(0);
-        }
-        100% {
-          transform: translateY(-5px);
-        }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
       }
       .main-content {
         max-width: 600px;
@@ -187,17 +438,16 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         top: 0;
         left: 0;
         right: 0;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(10px);
+        background: rgba(15, 12, 41, 0.95);
         padding: 0.75rem 1rem;
         z-index: 45;
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid rgba(0, 255, 255, 0.2);
         opacity: 0;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.2s ease;
       }
-      
+
       .mobile-logo.visible {
         opacity: 1;
       }
@@ -266,43 +516,20 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       .streak-card {
         background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
         border-radius: 20px;
-        padding: 2rem;
+        padding: 1.75rem;
         text-align: center;
         margin-bottom: 1.5rem;
-        box-shadow: 0 8px 30px rgba(255, 107, 107, 0.4);
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
         position: relative;
-        overflow: hidden;
-      }
-
-      .streak-card::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-        animation: pulse 3s ease-in-out infinite;
-      }
-
-      @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.1); opacity: 0.8; }
       }
 
       .streak-icon {
-        font-size: 4rem;
+        font-size: 3rem;
         margin-bottom: 0.5rem;
-        animation: flicker 2s ease-in-out infinite;
-      }
-
-      @keyframes flicker {
-        0%, 100% { transform: scale(1); filter: brightness(1); }
-        50% { transform: scale(1.1); filter: brightness(1.3); }
       }
 
       .streak-number {
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: bold;
         line-height: 1;
         margin-bottom: 0.25rem;
@@ -330,61 +557,52 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       }
 
       .stat-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(0, 255, 255, 0.3);
-        border-radius: 15px;
-        padding: 1.5rem 1rem;
+        background: rgba(20, 20, 40, 0.8);
+        border: 1.5px solid rgba(0, 255, 255, 0.25);
+        border-radius: 14px;
+        padding: 1.25rem 0.75rem;
         text-align: center;
-        transition: all 0.3s ease;
-      }
-
-      .stat-card:hover {
-        border-color: #00ffff;
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-        transform: translateY(-4px);
       }
 
       .stat-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+        font-size: 1.75rem;
+        margin-bottom: 0.4rem;
       }
 
       .stat-number {
-        font-size: 2rem;
+        font-size: 1.75rem;
         font-weight: bold;
         color: #00ffff;
         line-height: 1;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.2rem;
       }
 
       .stat-label {
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.65);
       }
 
       /* Barra de progreso semanal */
       .progress-section {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(0, 255, 255, 0.3);
-        border-radius: 15px;
-        padding: 1.5rem;
+        background: rgba(20, 20, 40, 0.8);
+        border: 1.5px solid rgba(0, 255, 255, 0.25);
+        border-radius: 14px;
+        padding: 1.25rem;
         margin-bottom: 1.5rem;
       }
 
       .progress-section-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: #00ffff;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         font-weight: 600;
       }
 
       .progress-bar-container {
         width: 100%;
-        height: 30px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 15px;
+        height: 24px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 12px;
         overflow: hidden;
         position: relative;
         margin-bottom: 0.5rem;
@@ -393,48 +611,30 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       .progress-bar-fill {
         height: 100%;
         background: linear-gradient(90deg, #00ffff 0%, #00dddd 100%);
-        border-radius: 15px;
-        transition: width 1s ease;
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        border-radius: 12px;
+        transition: width 0.5s ease;
         position: relative;
-      }
-
-      .progress-bar-fill::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        animation: shimmer 2s infinite;
-      }
-
-      @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
       }
 
       .progress-text {
         text-align: center;
-        font-size: 0.95rem;
-        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.75);
       }
 
       /* Calendario mini */
       .calendar-preview {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(0, 255, 255, 0.3);
-        border-radius: 15px;
-        padding: 1.5rem;
+        background: rgba(20, 20, 40, 0.8);
+        border: 1.5px solid rgba(0, 255, 255, 0.25);
+        border-radius: 14px;
+        padding: 1.25rem;
         margin-bottom: 1.5rem;
       }
 
       .calendar-preview-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: #00ffff;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         font-weight: 600;
       }
 
@@ -560,7 +760,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       }
 
       @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+          transform: rotate(360deg);
+        }
       }
       /* 🔑 ESTILOS DE BOTONES DE ACCIÓN */
       .action-buttons-wrapper {
@@ -568,7 +770,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         max-width: 600px;
         margin: 0 auto;
       }
-      
+
       .action-buttons {
         display: flex;
         justify-content: center;
@@ -576,36 +778,180 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         gap: 0.75rem;
         flex-wrap: wrap;
       }
-      
+
       #mark-completed {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        padding: 12px 24px;
-        border-radius: 50px;
-        font-size: 0.95rem;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-size: 0.9rem;
         font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-height: 44px;
       }
-      
-      #mark-completed:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-        background: linear-gradient(135deg, #5568d3 0%, #6941a0 100%);
-      }
-      
+
       #mark-completed:active {
-        transform: translateY(0);
+        opacity: 0.9;
       }
-      
+
       #mark-completed svg {
         flex-shrink: 0;
+      }
+
+      .secondary-action-btn {
+        background: rgba(102, 126, 234, 0.15);
+        color: #a78bfa;
+        border: 1.5px solid rgba(167, 139, 250, 0.4);
+        padding: 10px 16px;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        gap: 0.25rem;
+      }
+
+      .secondary-action-btn:active {
+        background: rgba(102, 126, 234, 0.25);
+      }
+
+      /* === MODAL REGISTRO RÁPIDO === */
+      .quick-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      .quick-modal.hidden {
+        display: none;
+      }
+
+      .quick-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.75);
+      }
+
+      .quick-modal-content {
+        position: relative;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
+        border: 2px solid rgba(167, 139, 250, 0.4);
+        border-radius: 20px;
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 360px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .quick-modal-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 1.25rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .quick-modal-title {
+        font-size: 1.25rem;
+        color: #a78bfa;
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+      }
+
+      .quick-modal-desc {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin: 0 0 1rem 0;
+      }
+
+      .quick-days-modal {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.35rem;
+        margin-bottom: 1rem;
+      }
+
+      .quick-days-modal .quick-day-btn {
+        padding: 0.4rem 0.2rem;
+        min-width: auto;
+        min-height: 48px;
+        border-radius: 8px;
+      }
+
+      .quick-days-modal .quick-day-btn .day-name {
+        font-size: 0.6rem;
+      }
+
+      .quick-days-modal .quick-day-btn .day-date {
+        font-size: 0.9rem;
+      }
+
+      .quick-modal-form .form-input {
+        margin-bottom: 0.75rem;
+      }
+
+      .checkbox-group-modal {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .checkbox-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem 0.75rem;
+        background: linear-gradient(135deg, rgba(20, 20, 40, 0.9) 0%, rgba(30, 30, 50, 0.9) 100%);
+        border: 1.5px solid rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.85);
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .checkbox-btn:active {
+        background: rgba(0, 255, 255, 0.1);
+      }
+
+      .checkbox-btn:has(input:checked) {
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(0, 200, 200, 0.15) 100%);
+        border-color: #00ffff;
+        color: white;
+      }
+
+      .checkbox-btn input {
+        display: none;
       }
 
       /* Estilos de la lista de productos en columna */
@@ -629,15 +975,15 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         justify-content: center;
         pointer-events: none;
       }
-      
+
       .toast-container.has-toast {
         display: flex;
         pointer-events: auto;
       }
-      
+
       /* Overlay oscuro con blur */
       .toast-container::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: 0;
@@ -650,8 +996,12 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
 
       @media (max-width: 768px) {
@@ -661,42 +1011,51 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       }
 
       .toast {
-        background: linear-gradient(135deg, rgba(20, 20, 40, 0.98) 0%, rgba(30, 30, 55, 0.98) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(20, 20, 40, 0.98) 0%,
+          rgba(30, 30, 55, 0.98) 100%
+        );
         border: 3px solid rgba(0, 255, 255, 0.7);
         border-radius: 20px;
         padding: 2rem 2.5rem;
         min-width: 320px;
         max-width: 500px;
-        box-shadow: 
+        box-shadow:
           0 20px 60px rgba(0, 0, 0, 0.9),
           0 0 40px rgba(0, 255, 255, 0.5),
           inset 0 1px 0 rgba(255, 255, 255, 0.2);
         /* Sin blur para mantener el texto nítido */
         pointer-events: auto;
-        animation: modalIn 280ms ease-out;
+        animation: modalIn 200ms ease-out;
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        gap: 1rem;
+        gap: 0.75rem;
         position: relative;
-        overflow: visible;
         z-index: 2;
-        will-change: transform, opacity;
-        transform: translateY(0);
       }
 
       @keyframes modalIn {
-        from { transform: translateY(10px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+        from {
+          transform: translateY(8px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
 
       .toast.toast-exit {
-        animation: modalOut 200ms ease-in forwards;
+        animation: modalOut 150ms ease-in forwards;
       }
 
       @keyframes modalOut {
-        to { transform: translateY(6px); opacity: 0; }
+        to {
+          opacity: 0;
+        }
       }
 
       @media (max-width: 768px) {
@@ -704,45 +1063,35 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           min-width: unset;
           width: 90%;
           max-width: calc(100vw - 2rem);
-          padding: 1.75rem 1.5rem;
+          padding: 1.5rem 1.25rem;
         }
       }
 
       .toast-icon {
-        font-size: 4rem;
+        font-size: 2.5rem;
         flex-shrink: 0;
-        filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.8));
-        animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        margin-bottom: 0.5rem;
-      }
-
-      @keyframes bounceIn {
-        0% { transform: scale(0) rotate(-180deg); }
-        50% { transform: scale(1.3) rotate(10deg); }
-        100% { transform: scale(1) rotate(0deg); }
+        margin-bottom: 0.25rem;
       }
 
       .toast-content {
         width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.35rem;
       }
 
       .toast-title {
-        font-weight: 700;
+        font-weight: 600;
         color: #00ffff;
         margin: 0;
-        font-size: 1.5rem;
-        text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-        letter-spacing: 0.5px;
+        font-size: 1.2rem;
       }
 
       .toast-message {
-        color: rgba(255, 255, 255, 0.95);
+        color: rgba(255, 255, 255, 0.9);
         margin: 0;
-        font-size: 1rem;
-        line-height: 1.6;
+        font-size: 0.95rem;
+        line-height: 1.5;
         font-weight: 400;
       }
 
@@ -775,7 +1124,11 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       /* Variantes de toast */
       .toast.success {
         border-color: rgba(0, 255, 136, 0.6);
-        background: linear-gradient(135deg, rgba(0, 100, 50, 0.95) 0%, rgba(0, 150, 80, 0.95) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(0, 100, 50, 0.95) 0%,
+          rgba(0, 150, 80, 0.95) 100%
+        );
       }
 
       .toast.success::before {
@@ -789,7 +1142,11 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
       .toast.warning {
         border-color: rgba(255, 170, 0, 0.6);
-        background: linear-gradient(135deg, rgba(100, 70, 0, 0.95) 0%, rgba(150, 100, 0, 0.95) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(100, 70, 0, 0.95) 0%,
+          rgba(150, 100, 0, 0.95) 100%
+        );
       }
 
       .toast.warning::before {
@@ -803,7 +1160,11 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
       .toast.error {
         border-color: rgba(255, 70, 70, 0.6);
-        background: linear-gradient(135deg, rgba(100, 20, 20, 0.95) 0%, rgba(150, 30, 30, 0.95) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(100, 20, 20, 0.95) 0%,
+          rgba(150, 30, 30, 0.95) 100%
+        );
       }
 
       .toast.error::before {
@@ -838,7 +1199,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
   </head>
   <body>
     <AuthModal />
-    
+
     <div id="intro-screen" class="intro-screen">
       <h1>Bienvenido a la guía de Skin Care</h1>
       <div class="iris-scan"></div>
@@ -848,11 +1209,15 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       <!-- Logo móvil (solo visible en móvil) -->
       <div class="mobile-logo">
         <img src="/images/logo.png" alt="Skincare Logo" />
-        <button id="mobile-user-menu-btn" class="mobile-user-btn" title="Cuenta">
+        <button
+          id="mobile-user-menu-btn"
+          class="mobile-user-btn"
+          title="Cuenta"
+        >
           👤
         </button>
       </div>
-      
+
       <Header />
 
       <div id="guide-view">
@@ -860,13 +1225,56 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         <div class="action-buttons-wrapper" style="margin-bottom:16px;">
           <div class="action-buttons">
             <button id="mark-completed" type="button">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 0.5rem;">
-                <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                style="margin-right: 0.5rem;"
+              >
+                <path
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                ></path>
               </svg>
-              Completar Rutina
+              Completar Hoy
             </button>
-            <!-- NUEVO GESTOR DE RECORDATORIOS -->
+            <button id="open-manual-register" type="button" class="secondary-action-btn" title="Añadir día anterior">
+              📅 Añadir
+            </button>
             <ReminderManager />
+          </div>
+        </div>
+
+        <!-- MODAL REGISTRO RÁPIDO -->
+        <div id="quick-register-modal" class="quick-modal hidden">
+          <div class="quick-modal-overlay"></div>
+          <div class="quick-modal-content">
+            <button class="quick-modal-close" id="close-quick-modal">×</button>
+            <h3 class="quick-modal-title">📅 Registrar Día</h3>
+            <p class="quick-modal-desc">Añade una rutina completada de días anteriores</p>
+            
+            <div id="quick-days-modal" class="quick-days-modal">
+              <!-- Se llena con JavaScript -->
+            </div>
+
+            <div class="quick-modal-form">
+              <input type="date" id="quick-modal-date" class="form-input" />
+              
+              <div class="checkbox-group-modal">
+                <label class="checkbox-btn">
+                  <input type="checkbox" id="quick-morning" value="morning">
+                  <span>☀️ Mañana</span>
+                </label>
+                <label class="checkbox-btn">
+                  <input type="checkbox" id="quick-night" value="night">
+                  <span>🌙 Noche</span>
+                </label>
+              </div>
+
+              <button type="button" id="quick-submit-btn" class="submit-manual-btn">
+                ✓ Guardar
+              </button>
+            </div>
           </div>
         </div>
 
@@ -907,6 +1315,55 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
             <div class="streak-message" id="streak-message">¡Sigue así!</div>
           </div>
 
+          <!-- FORMULARIO REGISTRO MANUAL DE DÍAS -->
+          <div class="manual-register-card">
+            <div class="manual-register-header">
+              <h3 class="manual-register-title">
+                <span>📝</span> Registrar Día
+              </h3>
+              <button id="toggle-manual-form" class="manual-register-toggle">
+                Añadir
+              </button>
+            </div>
+            
+            <div id="manual-register-form" class="manual-register-form">
+              <!-- Botones rápidos para días recientes -->
+              <div class="quick-days" id="quick-days">
+                <!-- Se llena con JavaScript -->
+              </div>
+
+              <form id="manual-completion-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" id="manual-date" class="form-input" required>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <label class="form-label" style="width: 100%;">Rutinas completadas</label>
+                </div>
+                
+                <div class="checkbox-group">
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="routine-type" value="morning" id="check-morning">
+                    <span class="checkbox-icon">☀️</span>
+                    <span>Mañana</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="routine-type" value="night" id="check-night">
+                    <span class="checkbox-icon">🌙</span>
+                    <span>Noche</span>
+                  </label>
+                </div>
+
+                <button type="submit" class="submit-manual-btn" id="submit-manual">
+                  <span>✓</span> Guardar Registro
+                </button>
+              </form>
+            </div>
+          </div>
+
           <!-- PANEL DE LOGROS Y DESAFÍOS -->
           <AchievementsPanel />
 
@@ -941,9 +1398,16 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           <div class="progress-section">
             <div class="progress-section-title">Progreso esta semana</div>
             <div class="progress-bar-container">
-              <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+              <div
+                class="progress-bar-fill"
+                id="progress-bar"
+                style="width: 0%"
+              >
+              </div>
             </div>
-            <div class="progress-text" id="progress-text">0 de 14 rutinas completadas</div>
+            <div class="progress-text" id="progress-text">
+              0 de 14 rutinas completadas
+            </div>
           </div>
 
           <!-- Mini calendario de última semana -->
@@ -998,44 +1462,41 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         const bottomNav = document.getElementById("bottom-nav");
 
         // Verificar si ya se mostró la intro en esta sesión
-        const introShown = sessionStorage.getItem('introShown');
-        
+        const introShown = sessionStorage.getItem("introShown");
+
         if (introShown) {
-          // Si ya se mostró, saltarla
+          // Si ya se mostró, saltarla inmediatamente
           introScreen.classList.add("hidden");
           mainContent.style.display = "block";
-          // Mostrar navbar y logo móvil inmediatamente
           if (bottomNav) {
             bottomNav.style.display = "flex";
-            setTimeout(() => bottomNav.classList.add("visible"), 100);
+            bottomNav.classList.add("visible");
           }
-          const mobileLogo = document.querySelector('.mobile-logo');
+          const mobileLogo = document.querySelector(".mobile-logo");
           if (mobileLogo) {
-            mobileLogo.classList.add('visible');
+            mobileLogo.classList.add("visible");
           }
         } else {
-          // Primera vez, mostrar intro
+          // Primera vez, mostrar intro breve
           setTimeout(() => {
             introScreen.classList.add("hidden");
-            setTimeout(() => {
-              mainContent.style.display = "block";
-              // Mostrar navbar y logo móvil después de que aparezca el contenido
-              if (bottomNav) {
-                bottomNav.style.display = "flex";
-                setTimeout(() => bottomNav.classList.add("visible"), 300);
-              }
-              const mobileLogo = document.querySelector('.mobile-logo');
-              if (mobileLogo) {
-                setTimeout(() => mobileLogo.classList.add('visible'), 300);
-              }
-              // Marcar que ya se mostró
-              sessionStorage.setItem('introShown', 'true');
-            }, 1000);
-          }, 3000);
+            mainContent.style.display = "block";
+            if (bottomNav) {
+              bottomNav.style.display = "flex";
+              bottomNav.classList.add("visible");
+            }
+            const mobileLogo = document.querySelector(".mobile-logo");
+            if (mobileLogo) {
+              mobileLogo.classList.add("visible");
+            }
+            sessionStorage.setItem("introShown", "true");
+          }, 1500); // Reducido de 3000ms a 1500ms
         }
 
         const navButtons = document.querySelectorAll(".main-nav .nav-link");
-        const bottomNavButtons = document.querySelectorAll("#bottom-nav .nav-item");
+        const bottomNavButtons = document.querySelectorAll(
+          "#bottom-nav .nav-item",
+        );
         const guideView = document.getElementById("guide-view");
         const calendarView = document.getElementById("calendar-view");
         const progressView = document.getElementById("progress-view");
@@ -1047,69 +1508,83 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           // Remover active de todos los botones
           navButtons.forEach((btn) => btn.classList.remove("active"));
           bottomNavButtons.forEach((btn) => btn.classList.remove("active"));
-          
+
           // Ocultar todas las vistas
           guideView.classList.add("hidden");
           calendarView.classList.add("hidden");
           progressView.classList.add("hidden");
           routinesView.classList.add("hidden");
           chatView.classList.add("hidden");
-          
+
           // Activar la vista correspondiente
           if (viewName === "guide") {
             guideView.classList.remove("hidden");
-            document.querySelector('[data-view="guide"]')?.classList.add("active");
+            document
+              .querySelector('[data-view="guide"]')
+              ?.classList.add("active");
           } else if (viewName === "calendar") {
             calendarView.classList.remove("hidden");
-            document.querySelector('[data-view="calendar"]')?.classList.add("active");
+            document
+              .querySelector('[data-view="calendar"]')
+              ?.classList.add("active");
           } else if (viewName === "progress") {
             progressView.classList.remove("hidden");
-            document.querySelector('[data-view="progress"]')?.classList.add("active");
+            document
+              .querySelector('[data-view="progress"]')
+              ?.classList.add("active");
             // Cargar datos de progreso si no se han cargado
             if (window.loadProgressData) {
               window.loadProgressData();
             }
           } else if (viewName === "routines") {
             routinesView.classList.remove("hidden");
-            document.querySelector('[data-view="routines"]')?.classList.add("active");
+            document
+              .querySelector('[data-view="routines"]')
+              ?.classList.add("active");
           } else if (viewName === "chat") {
             chatView.classList.remove("hidden");
-            document.querySelector('[data-view="chat"]')?.classList.add("active");
+            document
+              .querySelector('[data-view="chat"]')
+              ?.classList.add("active");
           }
         }
 
         // Event listeners para botones del header
         navButtons.forEach((button) => {
           button.addEventListener("click", () => {
-            activateView(button.getAttribute('data-view') || 'guide');
+            activateView(button.getAttribute("data-view") || "guide");
           });
         });
-        
+
         // Escuchar evento del bottom nav
-        window.addEventListener('change-view', (e) => {
+        window.addEventListener("change-view", (e) => {
           activateView(e.detail);
         });
 
         // Botón de usuario móvil
-        const mobileUserBtn = document.getElementById('mobile-user-menu-btn');
+        const mobileUserBtn = document.getElementById("mobile-user-menu-btn");
         if (mobileUserBtn) {
-          mobileUserBtn.addEventListener('click', () => {
+          mobileUserBtn.addEventListener("click", () => {
             const authApi = window.authModal;
-            const isAuth = !!(authApi && typeof authApi.isAuthenticated === 'function' && authApi.isAuthenticated());
+            const isAuth = !!(
+              authApi &&
+              typeof authApi.isAuthenticated === "function" &&
+              authApi.isAuthenticated()
+            );
 
             if (isAuth) {
-              const logoutModal = document.getElementById('logout-modal');
-              if (logoutModal) logoutModal.classList.remove('hidden');
+              const logoutModal = document.getElementById("logout-modal");
+              if (logoutModal) logoutModal.classList.remove("hidden");
             } else {
-              const authModal = document.getElementById('auth-modal');
-              if (authModal) authModal.classList.remove('hidden');
+              const authModal = document.getElementById("auth-modal");
+              if (authModal) authModal.classList.remove("hidden");
             }
           });
         }
 
         // Listener para actualizar progreso cuando se marca una rutina como completada
-        window.addEventListener('routine-completed', () => {
-          if (typeof window.loadProgressData === 'function') {
+        window.addEventListener("routine-completed", () => {
+          if (typeof window.loadProgressData === "function") {
             window.loadProgressData(true);
           }
         });
@@ -1117,31 +1592,37 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
     </script>
 
     <script>
-      import { auth, getProgressData, onAuthStateChanged, type User } from '../utils/firebase';
-      
+      import {
+        auth,
+        getProgressData,
+        onAuthStateChanged,
+        type User,
+      } from "../utils/firebase";
+
       // Función para cargar datos de progreso
       let progressDataLoaded = false;
-      
+
       async function loadProgressData(forceReload = false) {
         if (progressDataLoaded && !forceReload) return; // Ya se cargó, no volver a cargar
-        
+
         // Resetear elementos si es recarga
         if (forceReload) {
-          const loadingEl = document.getElementById('progress-loading');
-          const contentEl = document.getElementById('progress-content');
+          const loadingEl = document.getElementById("progress-loading");
+          const contentEl = document.getElementById("progress-content");
           if (loadingEl) {
-            loadingEl.style.display = 'block';
-            loadingEl.innerHTML = '<div class="progress-loading-spinner"></div><p>Cargando estadísticas...</p>';
+            loadingEl.style.display = "block";
+            loadingEl.innerHTML =
+              '<div class="progress-loading-spinner"></div><p>Cargando estadísticas...</p>';
           }
-          if (contentEl) contentEl.style.display = 'none';
+          if (contentEl) contentEl.style.display = "none";
           progressDataLoaded = false;
         }
-        
+
         onAuthStateChanged(auth, async (user: User | null) => {
-            if (!user) {
-              const loadingEl = document.getElementById('progress-loading');
-              if (loadingEl) {
-                loadingEl.innerHTML = `
+          if (!user) {
+            const loadingEl = document.getElementById("progress-loading");
+            if (loadingEl) {
+              loadingEl.innerHTML = `
                   <p style="margin-bottom: 1rem;">🔒 Inicia sesión para ver tu progreso</p>
                   <button 
                     onclick="window.dispatchEvent(new CustomEvent('open-auth-modal'))"
@@ -1160,170 +1641,423 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                     Iniciar Sesión
                   </button>
                 `;
+            }
+            return;
+          }
+
+          try {
+            const progressData = await getProgressData();
+
+            if (!progressData) {
+              const loadingEl = document.getElementById("progress-loading");
+              if (loadingEl) {
+                loadingEl.innerHTML = `<p>Error cargando datos. Intenta de nuevo.</p>`;
               }
               return;
             }
 
-            try {
-              const progressData = await getProgressData();
-              
-              if (!progressData) {
-                const loadingEl = document.getElementById('progress-loading');
-                if (loadingEl) {
-                  loadingEl.innerHTML = `<p>Error cargando datos. Intenta de nuevo.</p>`;
-                }
-                return;
-              }
+            // Guardar progreso para los logros
+            (window as any).currentProgressData = progressData;
 
-              // Guardar progreso para los logros
-              (window as any).currentProgressData = progressData;
+            progressDataLoaded = true;
 
-              progressDataLoaded = true;
+            // Ocultar loading y mostrar contenido
+            const loadingEl = document.getElementById("progress-loading");
+            const contentEl = document.getElementById("progress-content");
+            if (loadingEl) loadingEl.style.display = "none";
+            if (contentEl) contentEl.style.display = "block";
 
-              // Ocultar loading y mostrar contenido
-              const loadingEl = document.getElementById('progress-loading');
-              const contentEl = document.getElementById('progress-content');
-              if (loadingEl) loadingEl.style.display = 'none';
-              if (contentEl) contentEl.style.display = 'block';
+            // Actualizar racha actual
+            const streakNumber = document.getElementById("streak-number");
+            if (streakNumber) {
+              streakNumber.textContent = String(progressData.currentStreak);
+            }
 
-              // Actualizar racha actual
-              const streakNumber = document.getElementById('streak-number');
-              if (streakNumber) {
-                streakNumber.textContent = String(progressData.currentStreak);
-              }
-
-              // Mensaje motivacional según racha
-              const streakMessage = document.getElementById('streak-message');
-              if (streakMessage) {
-                if (progressData.currentStreak === 0) {
-                  streakMessage.textContent = '¡Comienza tu racha hoy!';
-                } else if (progressData.currentStreak < 3) {
-                  streakMessage.textContent = '¡Buen comienzo! 💪';
-                } else if (progressData.currentStreak < 7) {
-                  streakMessage.textContent = '¡Vas muy bien! 🌟';
-                } else if (progressData.currentStreak < 30) {
-                  streakMessage.textContent = '¡Increíble constancia! 🚀';
-                } else {
-                  streakMessage.textContent = '¡Eres una leyenda! 👑';
-                }
-              }
-
-              // Actualizar récord personal
-              const longestStreakEl = document.getElementById('longest-streak');
-              if (longestStreakEl) {
-                longestStreakEl.textContent = String(progressData.longestStreak);
-              }
-
-              // Total completadas
-              const totalCompletionsEl = document.getElementById('total-completions');
-              if (totalCompletionsEl) {
-                totalCompletionsEl.textContent = String(progressData.totalCompletions);
-              }
-
-              // Días activos
-              const daysActive = Object.keys(progressData.completions).length;
-              const daysActiveEl = document.getElementById('days-active');
-              if (daysActiveEl) {
-                daysActiveEl.textContent = String(daysActive);
-              }
-
-              // Tasa de éxito
-              const possibleCompletions = daysActive * 2;
-              const completionRate = possibleCompletions > 0 
-                ? Math.round((progressData.totalCompletions / possibleCompletions) * 100)
-                : 0;
-              const completionRateEl = document.getElementById('completion-rate');
-              if (completionRateEl) {
-                completionRateEl.textContent = `${completionRate}%`;
-              }
-
-              // Progreso semanal (últimos 7 días)
-              const today = new Date();
-              const last7Days = [];
-              let weekCompletions = 0;
-              
-              for (let i = 6; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                last7Days.push({ date: dateStr, data: progressData.completions[dateStr] });
-                
-                const dayData = progressData.completions[dateStr];
-                if (dayData) {
-                  if (dayData.morning?.completed) weekCompletions++;
-                  if (dayData.night?.completed) weekCompletions++;
-                }
-              }
-
-              const weekPercentage = (weekCompletions / 14) * 100;
-              const progressBarEl = document.getElementById('progress-bar');
-              if (progressBarEl) {
-                progressBarEl.style.width = `${weekPercentage}%`;
-              }
-              const progressTextEl = document.getElementById('progress-text');
-              if (progressTextEl) {
-                progressTextEl.textContent = `${weekCompletions} de 14 rutinas completadas`;
-              }
-
-              // Mini calendario de última semana
-              const weekCalendar = document.getElementById('week-calendar');
-              const dayNames = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-              
-              /* datos calendario cargados */
-              
-              if (weekCalendar) {
-                weekCalendar.innerHTML = ''; // Limpiar antes de llenar
-                last7Days.forEach((day, index) => {
-                  const cell = document.createElement('div');
-                  cell.className = 'day-cell';
-                  
-                  const dayData = day.data;
-                  const morningDone = dayData?.morning?.completed;
-                  const nightDone = dayData?.night?.completed;
-                  
-                  /* día procesado */
-                  
-                  if (morningDone && nightDone) {
-                    cell.classList.add('completed');
-                    cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">✓</span>`;
-                  } else if (morningDone || nightDone) {
-                    cell.classList.add('partial');
-                    cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">½</span>`;
-                  } else {
-                    cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: rgba(255,255,255,0.7); font-size: 0.9rem; box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);">○</span>`;
-                  }
-                  
-                  if (index === 6) {
-                    cell.classList.add('today');
-                  }
-                  
-                  weekCalendar.appendChild(cell);
-                });
-              }
-
-              // Disparar evento para actualizar logros
-              window.dispatchEvent(new CustomEvent('progress-updated'));
-
-            } catch (error) {
-              console.error('Error cargando progreso:', error);
-              const loadingEl = document.getElementById('progress-loading');
-              if (loadingEl) {
-                loadingEl.innerHTML = `<p>Error cargando datos. Intenta de nuevo.</p>`;
+            // Mensaje motivacional según racha
+            const streakMessage = document.getElementById("streak-message");
+            if (streakMessage) {
+              if (progressData.currentStreak === 0) {
+                streakMessage.textContent = "¡Comienza tu racha hoy!";
+              } else if (progressData.currentStreak < 3) {
+                streakMessage.textContent = "¡Buen comienzo! 💪";
+              } else if (progressData.currentStreak < 7) {
+                streakMessage.textContent = "¡Vas muy bien! 🌟";
+              } else if (progressData.currentStreak < 30) {
+                streakMessage.textContent = "¡Increíble constancia! 🚀";
+              } else {
+                streakMessage.textContent = "¡Eres una leyenda! 👑";
               }
             }
-          });
+
+            // Actualizar récord personal
+            const longestStreakEl = document.getElementById("longest-streak");
+            if (longestStreakEl) {
+              longestStreakEl.textContent = String(progressData.longestStreak);
+            }
+
+            // Total completadas
+            const totalCompletionsEl =
+              document.getElementById("total-completions");
+            if (totalCompletionsEl) {
+              totalCompletionsEl.textContent = String(
+                progressData.totalCompletions,
+              );
+            }
+
+            // Días activos
+            const daysActive = Object.keys(progressData.completions).length;
+            const daysActiveEl = document.getElementById("days-active");
+            if (daysActiveEl) {
+              daysActiveEl.textContent = String(daysActive);
+            }
+
+            // Tasa de éxito
+            const possibleCompletions = daysActive * 2;
+            const completionRate =
+              possibleCompletions > 0
+                ? Math.round(
+                    (progressData.totalCompletions / possibleCompletions) * 100,
+                  )
+                : 0;
+            const completionRateEl = document.getElementById("completion-rate");
+            if (completionRateEl) {
+              completionRateEl.textContent = `${completionRate}%`;
+            }
+
+            // Progreso semanal (últimos 7 días)
+            const today = new Date();
+            if (today.getHours() < 6) {
+              today.setDate(today.getDate() - 1);
+            }
+            const last7Days = [];
+            let weekCompletions = 0;
+
+            for (let i = 6; i >= 0; i--) {
+              const date = new Date(today);
+              date.setDate(date.getDate() - i);
+              const dateStr = date.toLocaleDateString("en-CA"); // YYYY-MM-DD local
+              last7Days.push({
+                date: dateStr,
+                data: progressData.completions[dateStr],
+              });
+
+              const dayData = progressData.completions[dateStr];
+              if (dayData) {
+                if (dayData.morning?.completed) weekCompletions++;
+                if (dayData.night?.completed) weekCompletions++;
+              }
+            }
+
+            const weekPercentage = (weekCompletions / 14) * 100;
+            const progressBarEl = document.getElementById("progress-bar");
+            if (progressBarEl) {
+              progressBarEl.style.width = `${weekPercentage}%`;
+            }
+            const progressTextEl = document.getElementById("progress-text");
+            if (progressTextEl) {
+              progressTextEl.textContent = `${weekCompletions} de 14 rutinas completadas`;
+            }
+
+            // Mini calendario de última semana
+            const weekCalendar = document.getElementById("week-calendar");
+            const dayNames = ["D", "L", "M", "X", "J", "V", "S"];
+
+            /* datos calendario cargados */
+
+            if (weekCalendar) {
+              weekCalendar.innerHTML = ""; // Limpiar antes de llenar
+              last7Days.forEach((day, index) => {
+                const cell = document.createElement("div");
+                cell.className = "day-cell";
+
+                const dayData = day.data;
+                const morningDone = dayData?.morning?.completed;
+                const nightDone = dayData?.night?.completed;
+
+                /* día procesado */
+
+                if (morningDone && nightDone) {
+                  cell.classList.add("completed");
+                  cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">✓</span>`;
+                } else if (morningDone || nightDone) {
+                  cell.classList.add("partial");
+                  cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">½</span>`;
+                } else {
+                  cell.innerHTML = `<span class="day-name" style="margin-bottom: 0.5rem;">${dayNames[new Date(day.date).getDay()]}</span><span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: rgba(255,255,255,0.7); font-size: 0.9rem; box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);">○</span>`;
+                }
+
+                if (index === 6) {
+                  cell.classList.add("today");
+                }
+
+                weekCalendar.appendChild(cell);
+              });
+            }
+
+            // Disparar evento para actualizar logros
+            window.dispatchEvent(new CustomEvent("progress-updated"));
+          } catch (error) {
+            console.error("Error cargando progreso:", error);
+            const loadingEl = document.getElementById("progress-loading");
+            if (loadingEl) {
+              loadingEl.innerHTML = `<p>Error cargando datos. Intenta de nuevo.</p>`;
+            }
+          }
+        });
       }
-      
+
       // Hacer la función disponible globalmente
       (window as any).loadProgressData = loadProgressData;
 
       // ==================== FUNCIONES DE RUTINA ====================
-      import { markRoutineComplete, isRoutineCompleted } from '../utils/firebase';
+      import {
+        markRoutineComplete,
+        isRoutineCompleted,
+        registerManualCompletion,
+      } from "../utils/firebase";
+
+      // ==================== REGISTRO MANUAL DE DÍAS ====================
+      
+      function initManualRegistration() {
+        const toggleBtn = document.getElementById('toggle-manual-form');
+        const formContainer = document.getElementById('manual-register-form');
+        const form = document.getElementById('manual-completion-form') as HTMLFormElement;
+        const dateInput = document.getElementById('manual-date') as HTMLInputElement;
+        const quickDaysContainer = document.getElementById('quick-days');
+
+        if (!toggleBtn || !formContainer || !form) return;
+
+        // Toggle del formulario
+        toggleBtn.addEventListener('click', () => {
+          formContainer.classList.toggle('visible');
+          toggleBtn.textContent = formContainer.classList.contains('visible') ? 'Cerrar' : 'Añadir';
+        });
+
+        // Establecer fecha máxima como hoy
+        const today = new Date();
+        const todayStr = today.toLocaleDateString('en-CA');
+        dateInput.max = todayStr;
+        dateInput.value = todayStr;
+
+        // Generar botones rápidos para los últimos 7 días
+        if (quickDaysContainer) {
+          const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+          quickDaysContainer.innerHTML = '';
+          
+          for (let i = 0; i < 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toLocaleDateString('en-CA');
+            const dayName = i === 0 ? 'Hoy' : i === 1 ? 'Ayer' : dayNames[date.getDay()];
+            const dayNum = date.getDate();
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quick-day-btn' + (i === 0 ? ' selected' : '');
+            btn.innerHTML = `<span class="day-name">${dayName}</span><span class="day-date">${dayNum}</span>`;
+            btn.addEventListener('click', () => {
+              dateInput.value = dateStr;
+              document.querySelectorAll('.quick-day-btn').forEach(b => b.classList.remove('selected'));
+              btn.classList.add('selected');
+            });
+            quickDaysContainer.appendChild(btn);
+          }
+        }
+
+        // Manejar envío del formulario - optimizado
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const date = dateInput.value;
+          const morningChecked = (document.getElementById('check-morning') as HTMLInputElement)?.checked;
+          const nightChecked = (document.getElementById('check-night') as HTMLInputElement)?.checked;
+
+          if (!date) {
+            showToast('Selecciona una fecha', { type: 'warning', icon: '📅', duration: 2500 });
+            return;
+          }
+
+          if (!morningChecked && !nightChecked) {
+            showToast('Selecciona al menos una rutina', { type: 'warning', icon: '⚠️', duration: 2500 });
+            return;
+          }
+
+          const routineTypes: ('morning' | 'night')[] = [];
+          if (morningChecked) routineTypes.push('morning');
+          if (nightChecked) routineTypes.push('night');
+
+          const submitBtn = document.getElementById('submit-manual') as HTMLButtonElement;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span>⏳</span> Guardando...';
+
+          // Cerrar formulario inmediatamente para UX rápida
+          formContainer.classList.remove('visible');
+          toggleBtn.textContent = 'Añadir';
+
+          try {
+            await registerManualCompletion(date, routineTypes);
+            
+            showToast('¡Guardado!', { 
+              type: 'success', 
+              icon: '✅',
+              title: 'Día registrado',
+              duration: 2500
+            });
+
+            // Resetear formulario
+            (document.getElementById('check-morning') as HTMLInputElement).checked = false;
+            (document.getElementById('check-night') as HTMLInputElement).checked = false;
+
+            // Actualizar datos de progreso en segundo plano
+            requestAnimationFrame(() => {
+              if (typeof (window as any).loadProgressData === 'function') {
+                (window as any).loadProgressData(true);
+              }
+            });
+
+          } catch (error: any) {
+            showToast(error.message || 'Error al guardar', { type: 'error', icon: '❌' });
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>✓</span> Guardar Registro';
+          }
+        });
+      }
+
+      // ==================== MODAL REGISTRO RÁPIDO (PANTALLA PRINCIPAL) ====================
+      
+      function initQuickRegisterModal() {
+        const openBtn = document.getElementById('open-manual-register');
+        const modal = document.getElementById('quick-register-modal');
+        const closeBtn = document.getElementById('close-quick-modal');
+        const overlay = modal?.querySelector('.quick-modal-overlay');
+        const dateInput = document.getElementById('quick-modal-date') as HTMLInputElement;
+        const quickDaysContainer = document.getElementById('quick-days-modal');
+        const submitBtn = document.getElementById('quick-submit-btn');
+
+        if (!openBtn || !modal || !closeBtn || !dateInput) return;
+
+        // Configurar fecha máxima como hoy
+        const today = new Date();
+        const todayStr = today.toLocaleDateString('en-CA');
+        dateInput.max = todayStr;
+        
+        // Por defecto, seleccionar ayer
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        dateInput.value = yesterday.toLocaleDateString('en-CA');
+
+        // Generar botones rápidos
+        if (quickDaysContainer) {
+          const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+          quickDaysContainer.innerHTML = '';
+          
+          for (let i = 1; i <= 7; i++) { // Empezamos desde ayer
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toLocaleDateString('en-CA');
+            const dayName = i === 1 ? 'Ayer' : dayNames[date.getDay()];
+            const dayNum = date.getDate();
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quick-day-btn' + (i === 1 ? ' selected' : '');
+            btn.innerHTML = `<span class="day-name">${dayName}</span><span class="day-date">${dayNum}</span>`;
+            btn.addEventListener('click', () => {
+              dateInput.value = dateStr;
+              quickDaysContainer.querySelectorAll('.quick-day-btn').forEach(b => b.classList.remove('selected'));
+              btn.classList.add('selected');
+            });
+            quickDaysContainer.appendChild(btn);
+          }
+        }
+
+        // Abrir modal
+        openBtn.addEventListener('click', () => {
+          modal.classList.remove('hidden');
+        });
+
+        // Cerrar modal
+        const closeModal = () => modal.classList.add('hidden');
+        closeBtn.addEventListener('click', closeModal);
+        overlay?.addEventListener('click', closeModal);
+
+        // Enviar formulario - optimizado para no bloquear UI
+        submitBtn?.addEventListener('click', async () => {
+          const date = dateInput.value;
+          const morningChecked = (document.getElementById('quick-morning') as HTMLInputElement)?.checked;
+          const nightChecked = (document.getElementById('quick-night') as HTMLInputElement)?.checked;
+
+          if (!date) {
+            showToast('Selecciona una fecha', { type: 'warning', icon: '📅', duration: 2500 });
+            return;
+          }
+
+          if (!morningChecked && !nightChecked) {
+            showToast('Selecciona al menos una rutina', { type: 'warning', icon: '⚠️', duration: 2500 });
+            return;
+          }
+
+          const routineTypes: ('morning' | 'night')[] = [];
+          if (morningChecked) routineTypes.push('morning');
+          if (nightChecked) routineTypes.push('night');
+
+          const btn = submitBtn as HTMLButtonElement;
+          btn.disabled = true;
+          btn.textContent = '⏳ Guardando...';
+
+          // Cerrar modal inmediatamente para feedback rápido
+          closeModal();
+
+          try {
+            await registerManualCompletion(date, routineTypes);
+            
+            showToast('¡Día registrado!', { 
+              type: 'success', 
+              icon: '✅',
+              title: 'Guardado',
+              duration: 2500
+            });
+
+            // Resetear checkboxes
+            (document.getElementById('quick-morning') as HTMLInputElement).checked = false;
+            (document.getElementById('quick-night') as HTMLInputElement).checked = false;
+
+            // Actualizar progreso en segundo plano
+            requestAnimationFrame(() => {
+              if (typeof (window as any).loadProgressData === 'function') {
+                (window as any).loadProgressData(true);
+              }
+            });
+
+          } catch (error: any) {
+            showToast(error.message || 'Error al guardar', { type: 'error', icon: '❌' });
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '✓ Guardar';
+          }
+        });
+      }
+
+      // Inicializar registro manual cuando el DOM esté listo
+      document.addEventListener('DOMContentLoaded', () => {
+        // Usar requestIdleCallback si está disponible para no bloquear renderizado
+        const initFn = () => {
+          initManualRegistration();
+          initQuickRegisterModal();
+        };
+        
+        if ('requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(initFn, { timeout: 1000 });
+        } else {
+          setTimeout(initFn, 300);
+        }
+      });
 
       // ==================== SISTEMA DE NOTIFICACIONES MEJORADO ====================
-      
+
       interface ToastOptions {
-        type?: 'success' | 'warning' | 'error' | 'info';
+        type?: "success" | "warning" | "error" | "info";
         title?: string;
         icon?: string;
         duration?: number;
@@ -1331,24 +2065,36 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
       function showToast(message: string, options: ToastOptions = {}) {
         const {
-          type = 'info',
-          title = type === 'success' ? '¡Éxito!' : type === 'warning' ? 'Atención' : type === 'error' ? 'Error' : 'Info',
-          icon = type === 'success' ? '🎉' : type === 'warning' ? '⚠️' : type === 'error' ? '❌' : 'ℹ️',
-          duration = 5000
+          type = "info",
+          title = type === "success"
+            ? "¡Éxito!"
+            : type === "warning"
+              ? "Atención"
+              : type === "error"
+                ? "Error"
+                : "Info",
+          icon = type === "success"
+            ? "🎉"
+            : type === "warning"
+              ? "⚠️"
+              : type === "error"
+                ? "❌"
+                : "ℹ️",
+          duration = 5000,
         } = options;
 
-        const container = document.getElementById('toast-container');
+        const container = document.getElementById("toast-container");
         if (!container) return;
 
         // Limpiar toasts anteriores
-        container.innerHTML = '';
-        
-        // Añadir clase para mostrar overlay
-        container.classList.add('has-toast');
+        container.innerHTML = "";
 
-        const toast = document.createElement('div');
+        // Añadir clase para mostrar overlay
+        container.classList.add("has-toast");
+
+        const toast = document.createElement("div");
         toast.className = `toast ${type}`;
-        
+
         toast.innerHTML = `
           <button class="toast-close" aria-label="Cerrar">×</button>
           <div class="toast-icon">${icon}</div>
@@ -1361,34 +2107,39 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         container.appendChild(toast);
 
         // Botón cerrar
-        const closeBtn = toast.querySelector('.toast-close');
-        closeBtn?.addEventListener('click', () => removeToast(toast, container));
+        const closeBtn = toast.querySelector(".toast-close");
+        closeBtn?.addEventListener("click", () =>
+          removeToast(toast, container),
+        );
 
         // Click en overlay para cerrar
-        container.addEventListener('click', (e) => {
+        container.addEventListener("click", (e) => {
           if (e.target === container) {
             removeToast(toast, container);
           }
         });
 
         // Auto-remove
-        const timeout = setTimeout(() => removeToast(toast, container), duration);
+        const timeout = setTimeout(
+          () => removeToast(toast, container),
+          duration,
+        );
 
         // Limpiar timeout si se cierra manualmente
-        toast.setAttribute('data-timeout', String(timeout));
+        toast.setAttribute("data-timeout", String(timeout));
       }
 
       function removeToast(toast: HTMLElement, container: HTMLElement) {
-        const timeoutId = toast.getAttribute('data-timeout');
+        const timeoutId = toast.getAttribute("data-timeout");
         if (timeoutId) clearTimeout(Number(timeoutId));
-        
-        toast.classList.add('toast-exit');
-        
+
+        toast.classList.add("toast-exit");
+
         setTimeout(() => {
           toast.remove();
           // Quitar overlay si no hay más toasts
           if (container.children.length === 0) {
-            container.classList.remove('has-toast');
+            container.classList.remove("has-toast");
           }
         }, 300);
       }
@@ -1401,34 +2152,47 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         try {
           // Verificar autenticación
           const user = await new Promise((resolve) => {
-            const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-              unsubscribe();
-              resolve(user);
-            });
+            const unsubscribe = onAuthStateChanged(
+              auth,
+              (user: User | null) => {
+                unsubscribe();
+                resolve(user);
+              },
+            );
           });
-          
+
           if (!user) {
-            window.dispatchEvent(new CustomEvent('open-auth-modal'));
+            window.dispatchEvent(new CustomEvent("open-auth-modal"));
             return;
           }
-          
-          const todayKey = new Date().toISOString().split("T")[0];
-          const firestoreRoutineType = routineType === "diurno" ? "morning" : "night";
-          
+
+          // Función para obtener fecha ajustada (si es antes de las 6 AM, cuenta como ayer)
+          const getAdjustedDate = () => {
+            const now = new Date();
+            if (now.getHours() < 6) {
+              now.setDate(now.getDate() - 1);
+            }
+            return now.toLocaleDateString("en-CA"); // YYYY-MM-DD local
+          };
+
+          const todayKey = getAdjustedDate();
+          const firestoreRoutineType =
+            routineType === "diurno" ? "morning" : "night";
+
           await markRoutineComplete(todayKey, firestoreRoutineType);
-          
-          // Actualizar UI
+
+          // Actualizar UI con estilo de éxito
           const btnComplete = document.getElementById("mark-completed");
           if (btnComplete) {
-            btnComplete.setAttribute('disabled', 'true');
-            btnComplete.textContent = "✅ Rutina completada";
-            (btnComplete as HTMLButtonElement).style.opacity = "0.6";
-            (btnComplete as HTMLButtonElement).style.cursor = "not-allowed";
+            btnComplete.setAttribute("disabled", "true");
+            btnComplete.innerHTML = "✅ ¡Completado!";
+            (btnComplete as HTMLButtonElement).style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+            (btnComplete as HTMLButtonElement).style.cursor = "default";
           }
-          
+
           // Disparar evento para actualizar progreso
-          window.dispatchEvent(new CustomEvent('routine-completed'));
-          
+          window.dispatchEvent(new CustomEvent("routine-completed"));
+
           // Sin toast: solo actualizar botón y estado
         } catch (error) {
           // Error silencioso (sin toast)
@@ -1440,36 +2204,52 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         try {
           // Verificar autenticación
           const user = await new Promise((resolve) => {
-            const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-              unsubscribe();
-              resolve(user);
-            });
+            const unsubscribe = onAuthStateChanged(
+              auth,
+              (user: User | null) => {
+                unsubscribe();
+                resolve(user);
+              },
+            );
           });
-          
+
           const btnComplete = document.getElementById("mark-completed");
-          
+
           if (!user) {
             // No autenticado, mostrar modal al hacer clic (sin toast)
             btnComplete?.addEventListener("click", () => {
-              window.dispatchEvent(new CustomEvent('open-auth-modal'));
+              window.dispatchEvent(new CustomEvent("open-auth-modal"));
             });
             return;
           }
-          
-          const todayKey = new Date().toISOString().split("T")[0];
+
+          // Función para obtener fecha ajustada (si es antes de las 6 AM, cuenta como ayer)
+          const getAdjustedDate = () => {
+            const now = new Date();
+            if (now.getHours() < 6) {
+              now.setDate(now.getDate() - 1);
+            }
+            return now.toLocaleDateString("en-CA"); // YYYY-MM-DD local
+          };
+
+          const todayKey = getAdjustedDate();
           const currentRoutine = (window as any).currentRoutine || "diurno";
-          const firestoreRoutineType = currentRoutine === "diurno" ? "morning" : "night";
-          
-          const alreadyDone = await isRoutineCompleted(todayKey, firestoreRoutineType);
-          
+          const firestoreRoutineType =
+            currentRoutine === "diurno" ? "morning" : "night";
+
+          const alreadyDone = await isRoutineCompleted(
+            todayKey,
+            firestoreRoutineType,
+          );
+
           if (alreadyDone && btnComplete) {
-            btnComplete.setAttribute('disabled', 'true');
-            btnComplete.textContent = "✅ Rutina completada";
-            (btnComplete as HTMLButtonElement).style.opacity = "0.6";
-            (btnComplete as HTMLButtonElement).style.cursor = "not-allowed";
+            btnComplete.setAttribute("disabled", "true");
+            btnComplete.innerHTML = "✅ ¡Completado!";
+            (btnComplete as HTMLButtonElement).style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+            (btnComplete as HTMLButtonElement).style.cursor = "default";
           }
         } catch (error) {
-          console.error('Error verificando completado:', error);
+          console.error("Error verificando completado:", error);
         }
       }
 
@@ -1520,16 +2300,16 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       // Enviar notificación (intenta service worker, si no Notification())
       async function showNotification(title, body, data = {}) {
         if (!("Notification" in window)) {
-          if (typeof window.showToast === 'function') {
-            window.showToast(body || title, { type: 'info', icon: '🔔' });
+          if (typeof window.showToast === "function") {
+            window.showToast(body || title, { type: "info", icon: "🔔" });
           }
           return;
         }
 
         const permission = Notification.permission;
         if (permission !== "granted") {
-          if (typeof window.showToast === 'function') {
-            window.showToast(body || title, { type: 'info', icon: '🔔' });
+          if (typeof window.showToast === "function") {
+            window.showToast(body || title, { type: "info", icon: "🔔" });
           }
           return;
         }
@@ -1555,13 +2335,13 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         } catch (e) {
           console.warn(
             "No se pudo mostrar notificación via SW, fallback a Notification",
-            e
+            e,
           );
           try {
             new Notification(title, options);
           } catch (err) {
-            if (typeof window.showToast === 'function') {
-              window.showToast(body || title, { type: 'info', icon: '🔔' });
+            if (typeof window.showToast === "function") {
+              window.showToast(body || title, { type: "info", icon: "🔔" });
             }
           }
         }
@@ -1602,9 +2382,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       // Añadir recordatorio en X minutos
       function addReminderIn(minutes) {
         const titleElement = document.querySelector(".routine-title");
-        const title = titleElement
-          ? titleElement.textContent.trim()
-          : "Rutina";
+        const title = titleElement ? titleElement.textContent.trim() : "Rutina";
         const when = Date.now() + minutes * 60 * 1000;
         const reminder = {
           id: "r-" + Date.now(),
@@ -1622,17 +2400,20 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         // Pedimos permiso (si el usuario acepta, la notificación saldrá)
         requestNotificationPermission().then((perm) => {
           if (perm !== "granted") {
-            if (typeof window.showToast === 'function') {
-              window.showToast("Activa las notificaciones para recibir recordatorios", {
-                type: 'warning',
-                icon: '🔔'
-              });
+            if (typeof window.showToast === "function") {
+              window.showToast(
+                "Activa las notificaciones para recibir recordatorios",
+                {
+                  type: "warning",
+                  icon: "🔔",
+                },
+              );
             }
           } else {
-            if (typeof window.showToast === 'function') {
+            if (typeof window.showToast === "function") {
               window.showToast("Recordatorio programado correctamente", {
-                type: 'success',
-                icon: '⏰'
+                type: "success",
+                icon: "⏰",
               });
             }
           }
@@ -1672,7 +2453,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
 
           const left = document.createElement("div");
           left.innerHTML = `<strong style="display:block;color:#0ff">${new Date(
-            r.when
+            r.when,
           ).toLocaleTimeString("es-ES", {
             hour: "2-digit",
             minute: "2-digit",
@@ -1742,10 +2523,10 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
             e.preventDefault();
             const minutes = parseInt(form.elements["minutes"].value, 10);
             if (!minutes || minutes <= 0) {
-              if (typeof window.showToast === 'function') {
+              if (typeof window.showToast === "function") {
                 window.showToast("Introduce un número válido de minutos", {
-                  type: 'warning',
-                  icon: '⚠️'
+                  type: "warning",
+                  icon: "⚠️",
                 });
               }
               return;
@@ -1756,29 +2537,31 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         }
 
         initReminders();
-        
+
         // ==================== SEGUIMIENTO DE RUTINAS CON FIREBASE ====================
-        
+
         // Usar las funciones globales del script de módulo
         // Determinar tipo de rutina basado en la hora
         const now = new Date();
-        const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
+        const madridHour = new Date(
+          now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }),
+        ).getHours();
         const isDayTimeClient = madridHour >= 6 && madridHour < 20;
         const routineType = isDayTimeClient ? "diurno" : "nocturno";
-        
+
         // Guardar en window para que checkTodayCompletion lo pueda usar
         window.currentRoutine = routineType;
-        
+
         // Botón marcar como completada
         const btnComplete = document.getElementById("mark-completed");
-        
+
         // Configurar listener del botón
         btnComplete?.addEventListener("click", () => {
           if (!btnComplete.disabled && window.markRoutineCompleted) {
             window.markRoutineCompleted(routineType);
           }
         });
-        
+
         // Verificar si ya está completada hoy
         if (window.checkTodayCompletion) {
           window.checkTodayCompletion();
@@ -1788,21 +2571,22 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         window.skincareReminders = {
           addReminderIn,
           loadReminders,
-          cancelReminder
+          cancelReminder,
         };
-        
       });
 
       // 🔄 Recargar la lista de productos dinámicamente desde Firebase
       async function reloadProductList() {
         try {
-          const { getRoutines } = await import('./src/utils/firebase.ts');
+          const { getRoutines } = await import("./src/utils/firebase.ts");
           const routineData = await getRoutines();
           if (!routineData) return;
 
           // Determinar si es de día o noche (hora Madrid)
           const now = new Date();
-          const madridHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })).getHours();
+          const madridHour = new Date(
+            now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }),
+          ).getHours();
           const isDayTime = madridHour >= 6 && madridHour < 20;
 
           // Día de la semana en Madrid
@@ -1810,21 +2594,26 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
             timeZone: "Europe/Madrid",
             weekday: "long",
           }).format(now);
-          const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+          const capitalizedDay =
+            dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
 
           let products = [];
           if (isDayTime) {
-            products = routineData.dailyRoutine.filter(p => p.enabled).sort((a, b) => a.step - b.step);
+            products = routineData.dailyRoutine
+              .filter((p) => p.enabled)
+              .sort((a, b) => a.step - b.step);
           } else {
             products = (routineData.nightlyRoutines[capitalizedDay] || [])
-              .filter(p => p.enabled)
+              .filter((p) => p.enabled)
               .sort((a, b) => a.step - b.step);
           }
 
           // Renderizar productos
-          const productList = document.querySelector('.product-list');
+          const productList = document.querySelector(".product-list");
           if (productList && products.length > 0) {
-            productList.innerHTML = products.map(product => `
+            productList.innerHTML = products
+              .map(
+                (product) => `
               <div class="product-card" style="background-color: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.5rem; margin: 1rem 0; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: row; align-items: center; gap: 1.5rem; position: relative;">
                 <div class="step-badge" style="position: absolute; top: -10px; left: -10px; background-color: #00ffff; color: black; border-radius: 50%; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem;">${product.step}</div>
                 <img src="${product.image}" alt="${product.accessCode}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid #00ffff;" />
@@ -1835,22 +2624,25 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
                   <p style="font-size: 1rem; line-height: 1.4; margin: 0.5rem 0; opacity: 0.9;"><strong>Modo de Empleo:</strong> ${product.usage}</p>
                 </div>
               </div>
-            `).join('');
+            `,
+              )
+              .join("");
           }
         } catch (error) {
-          console.error('Error recargando productos:', error);
+          console.error("Error recargando productos:", error);
         }
       }
 
       // Detectar cambios en rutinas y recargar automáticamente
-      window.addEventListener('routines-updated', async function() {
-  /* rutinas actualizadas detectadas */
+      window.addEventListener("routines-updated", async function () {
+        /* rutinas actualizadas detectadas */
         await reloadProductList();
-        
+
         // Mostrar notificación
-        const toast = document.createElement('div');
-        toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00ffff;color:#000;padding:12px 24px;border-radius:8px;z-index:9999;font-weight:bold;box-shadow:0 4px 12px rgba(0,255,255,0.5);';
-        toast.textContent = '✅ Rutinas actualizadas';
+        const toast = document.createElement("div");
+        toast.style.cssText =
+          "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00ffff;color:#000;padding:12px 24px;border-radius:8px;z-index:9999;font-weight:bold;box-shadow:0 4px 12px rgba(0,255,255,0.5);";
+        toast.textContent = "✅ Rutinas actualizadas";
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
       });
@@ -1867,24 +2659,26 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         requestNotificationPermission,
         createReminder,
         getTimeUntil,
-        formatReminderTime
-      } from '../utils/reminders';
+        formatReminderTime,
+      } from "../utils/reminders";
       import {
         ACHIEVEMENTS,
         getCurrentChallenge,
         checkNewAchievements,
         getUnlockedAchievements,
-        type UserStats
-      } from '../data/achievements';
+        type UserStats,
+      } from "../data/achievements";
 
       // ==================== RECORDATORIOS ====================
-      
+
       function renderReminders() {
-        const container = document.getElementById('active-reminders');
+        const container = document.getElementById("active-reminders");
         if (!container) return;
 
         const reminders = loadReminders();
-        const activeReminders = reminders.filter(r => !r.fired && r.when > Date.now());
+        const activeReminders = reminders.filter(
+          (r) => !r.fired && r.when > Date.now(),
+        );
 
         if (activeReminders.length === 0) {
           container.innerHTML = `
@@ -1896,7 +2690,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
           return;
         }
 
-        container.innerHTML = activeReminders.map(reminder => `
+        container.innerHTML = activeReminders
+          .map(
+            (reminder) => `
           <div class="reminder-item">
             <div class="reminder-info">
               <h4 class="reminder-title">${reminder.title}</h4>
@@ -1914,7 +2710,9 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
               </button>
             </div>
           </div>
-        `).join('');
+        `,
+          )
+          .join("");
       }
 
       // Handlers globales para los botones
@@ -1929,24 +2727,24 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       };
 
       // Toggle reminder section
-      document.addEventListener('DOMContentLoaded', () => {
-        const toggleBtn = document.getElementById('toggle-reminder-section');
-        const content = document.getElementById('reminder-content');
-        
+      document.addEventListener("DOMContentLoaded", () => {
+        const toggleBtn = document.getElementById("toggle-reminder-section");
+        const content = document.getElementById("reminder-content");
+
         if (toggleBtn && content) {
-          toggleBtn.addEventListener('click', () => {
-            content.classList.toggle('collapsed');
-            toggleBtn.classList.toggle('collapsed');
+          toggleBtn.addEventListener("click", () => {
+            content.classList.toggle("collapsed");
+            toggleBtn.classList.toggle("collapsed");
           });
         }
 
         // Quick reminder buttons
-        document.querySelectorAll('.quick-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const minutes = parseInt(btn.getAttribute('data-minutes') || '0');
+        document.querySelectorAll(".quick-btn").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const minutes = parseInt(btn.getAttribute("data-minutes") || "0");
             if (minutes > 0) {
               const when = Date.now() + minutes * 60 * 1000;
-              const reminder = createReminder('custom', when);
+              const reminder = createReminder("custom", when);
               await addReminder(reminder);
               renderReminders();
             }
@@ -1954,17 +2752,21 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         });
 
         // Custom reminder form
-        const customForm = document.getElementById('custom-reminder-form');
+        const customForm = document.getElementById("custom-reminder-form");
         if (customForm) {
-          customForm.addEventListener('submit', async (e) => {
+          customForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const form = e.target as HTMLFormElement;
-            const timeInput = form.querySelector('[name="time"]') as HTMLInputElement;
-            const typeSelect = form.querySelector('[name="type"]') as HTMLSelectElement;
-            
+            const timeInput = form.querySelector(
+              '[name="time"]',
+            ) as HTMLInputElement;
+            const typeSelect = form.querySelector(
+              '[name="type"]',
+            ) as HTMLSelectElement;
+
             if (!timeInput.value) return;
 
-            const [hours, minutes] = timeInput.value.split(':').map(Number);
+            const [hours, minutes] = timeInput.value.split(":").map(Number);
             const now = new Date();
             const targetTime = new Date();
             targetTime.setHours(hours, minutes, 0, 0);
@@ -1974,7 +2776,7 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
               targetTime.setDate(targetTime.getDate() + 1);
             }
 
-            const type = typeSelect.value as 'morning' | 'evening' | 'custom';
+            const type = typeSelect.value as "morning" | "evening" | "custom";
             const reminder = createReminder(type, targetTime.getTime());
             await addReminder(reminder);
             renderReminders();
@@ -1983,19 +2785,24 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         }
 
         // Permission button
-        const permissionBtn = document.getElementById('request-permission-btn');
-        const permissionNotice = document.getElementById('notification-permission');
-        
+        const permissionBtn = document.getElementById("request-permission-btn");
+        const permissionNotice = document.getElementById(
+          "notification-permission",
+        );
+
         if (permissionBtn && permissionNotice) {
           // Check permission on load
-          if ('Notification' in window && Notification.permission === 'default') {
-            permissionNotice.style.display = 'block';
+          if (
+            "Notification" in window &&
+            Notification.permission === "default"
+          ) {
+            permissionNotice.style.display = "block";
           }
 
-          permissionBtn.addEventListener('click', async () => {
+          permissionBtn.addEventListener("click", async () => {
             const permission = await requestNotificationPermission();
-            if (permission === 'granted') {
-              permissionNotice.style.display = 'none';
+            if (permission === "granted") {
+              permissionNotice.style.display = "none";
             }
           });
         }
@@ -2009,11 +2816,11 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       });
 
       // ==================== LOGROS Y DESAFÍOS ====================
-      
+
       function getUserStats(): UserStats {
         // TODO: Obtener stats reales de Firebase
         const progressData = (window as any).currentProgressData || {};
-        
+
         return {
           currentStreak: progressData.currentStreak || 0,
           longestStreak: progressData.longestStreak || 0,
@@ -2026,23 +2833,23 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
       }
 
       function renderAchievements() {
-        const grid = document.getElementById('achievements-grid');
+        const grid = document.getElementById("achievements-grid");
         if (!grid) return;
 
         const stats = getUserStats();
         const unlockedAchievements = getUnlockedAchievements(stats);
-        const unlockedIds = unlockedAchievements.map(a => a.id);
+        const unlockedIds = unlockedAchievements.map((a) => a.id);
 
-        grid.innerHTML = ACHIEVEMENTS.map(achievement => {
+        grid.innerHTML = ACHIEVEMENTS.map((achievement) => {
           const isUnlocked = unlockedIds.includes(achievement.id);
           const rarityMap = {
-            'common': 'Común',
-            'rare': 'Raro',
-            'epic': 'Épico',
-            'legendary': 'Legendario'
+            common: "Común",
+            rare: "Raro",
+            epic: "Épico",
+            legendary: "Legendario",
           };
           return `
-            <div class="achievement-item ${isUnlocked ? 'unlocked' : 'locked'}">
+            <div class="achievement-item ${isUnlocked ? "unlocked" : "locked"}">
               <div class="achievement-rarity rarity-${achievement.rarity}">${rarityMap[achievement.rarity] || achievement.rarity}</div>
               <div class="achievement-icon">${achievement.icon}</div>
               <div class="achievement-content">
@@ -2051,10 +2858,10 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
               </div>
             </div>
           `;
-        }).join('');
+        }).join("");
 
         // Update total
-        const totalElement = document.getElementById('total-achievements');
+        const totalElement = document.getElementById("total-achievements");
         if (totalElement) {
           totalElement.textContent = `${unlockedAchievements.length}/${ACHIEVEMENTS.length}`;
         }
@@ -2064,42 +2871,50 @@ const routineTitle = isDayTime ? "PROTOCOLO DIURNO" : "PROTOCOLO NOCTURNO";
         const stats = getUserStats();
         const challenge = getCurrentChallenge(stats.currentStreak);
 
-        const titleEl = document.getElementById('challenge-title');
-        const descEl = document.getElementById('challenge-description');
-        const progressFill = document.getElementById('challenge-progress-fill');
-        const progressText = document.getElementById('challenge-progress-text');
-        const rewardIcon = document.getElementById('challenge-reward-icon');
-        const rewardName = document.getElementById('challenge-reward-name');
+        const titleEl = document.getElementById("challenge-title");
+        const descEl = document.getElementById("challenge-description");
+        const progressFill = document.getElementById("challenge-progress-fill");
+        const progressText = document.getElementById("challenge-progress-text");
+        const rewardIcon = document.getElementById("challenge-reward-icon");
+        const rewardName = document.getElementById("challenge-reward-name");
 
         if (titleEl) titleEl.textContent = challenge.title;
         if (descEl) descEl.textContent = challenge.description;
-        
-        const progress = Math.min((challenge.current / challenge.target) * 100, 100);
+
+        const progress = Math.min(
+          (challenge.current / challenge.target) * 100,
+          100,
+        );
         if (progressFill) progressFill.style.width = `${progress}%`;
-        if (progressText) progressText.textContent = `${challenge.current}/${challenge.target} días`;
-        
+        if (progressText)
+          progressText.textContent = `${challenge.current}/${challenge.target} días`;
+
         if (rewardIcon) rewardIcon.textContent = challenge.reward.icon;
         if (rewardName) rewardName.textContent = challenge.reward.name;
       }
 
       // Initialize achievements
-      document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener("DOMContentLoaded", () => {
         renderAchievements();
         renderCurrentChallenge();
 
         // Toggle button for achievements panel
-        const achievementsToggleBtn = document.getElementById('toggle-achievements-section');
-        const achievementsContent = document.getElementById('achievements-content');
-        
+        const achievementsToggleBtn = document.getElementById(
+          "toggle-achievements-section",
+        );
+        const achievementsContent = document.getElementById(
+          "achievements-content",
+        );
+
         if (achievementsToggleBtn && achievementsContent) {
-          achievementsToggleBtn.addEventListener('click', () => {
-            achievementsContent.classList.toggle('collapsed');
-            achievementsToggleBtn.classList.toggle('collapsed');
+          achievementsToggleBtn.addEventListener("click", () => {
+            achievementsContent.classList.toggle("collapsed");
+            achievementsToggleBtn.classList.toggle("collapsed");
           });
         }
 
         // Update when progress changes
-        window.addEventListener('progress-updated', () => {
+        window.addEventListener("progress-updated", () => {
           renderAchievements();
           renderCurrentChallenge();
         });

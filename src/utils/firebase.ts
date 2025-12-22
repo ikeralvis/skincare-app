@@ -417,6 +417,96 @@ export async function isRoutineCompleted(date: string, routineType: 'morning' | 
   }
 }
 
+// Registrar manualmente una fecha específica como completada
+export async function registerManualCompletion(date: string, routineTypes: ('morning' | 'night')[]): Promise<void> {
+  try {
+    const user = getCurrentUser();
+    if (!user) {
+      throw new Error('Debes iniciar sesión para registrar rutinas');
+    }
+
+    const progressData = await getProgressData();
+    if (!progressData) {
+      throw new Error('No se pudo obtener datos de progreso');
+    }
+
+    // Inicializar el día si no existe
+    if (!progressData.completions[date]) {
+      progressData.completions[date] = {};
+    }
+
+    let newCompletions = 0;
+
+    // Marcar las rutinas seleccionadas
+    for (const routineType of routineTypes) {
+      const wasCompleted = progressData.completions[date][routineType]?.completed;
+      
+      progressData.completions[date][routineType] = {
+        completed: true,
+        timestamp: Date.now(),
+      };
+
+      if (!wasCompleted) {
+        newCompletions++;
+      }
+    }
+
+    // Actualizar contador total
+    progressData.totalCompletions += newCompletions;
+
+    // Actualizar última fecha completada
+    progressData.lastCompletedDate = date;
+
+    // Recalcular racha con las nuevas fechas
+    const streak = calculateStreak(progressData.completions);
+    progressData.currentStreak = streak.current;
+    progressData.longestStreak = Math.max(progressData.longestStreak, streak.current);
+
+    // Guardar en Firebase
+    const docRef = doc(db, 'progress', user.uid);
+    await setDoc(docRef, progressData);
+    
+    console.log(`✅ Rutinas del ${date} registradas manualmente`);
+  } catch (error) {
+    console.error('Error registrando rutina manual:', error);
+    throw error;
+  }
+}
+
+// Eliminar una rutina completada (para corregir errores)
+export async function removeCompletion(date: string, routineType: 'morning' | 'night'): Promise<void> {
+  try {
+    const user = getCurrentUser();
+    if (!user) {
+      throw new Error('Debes iniciar sesión');
+    }
+
+    const progressData = await getProgressData();
+    if (!progressData) {
+      throw new Error('No se pudo obtener datos de progreso');
+    }
+
+    if (progressData.completions[date]?.[routineType]?.completed) {
+      progressData.completions[date][routineType] = {
+        completed: false,
+        timestamp: Date.now(),
+      };
+      progressData.totalCompletions = Math.max(0, progressData.totalCompletions - 1);
+
+      // Recalcular racha
+      const streak = calculateStreak(progressData.completions);
+      progressData.currentStreak = streak.current;
+
+      // Guardar en Firebase
+      const docRef = doc(db, 'progress', user.uid);
+      await setDoc(docRef, progressData);
+    }
+  } catch (error) {
+    console.error('Error eliminando rutina:', error);
+    throw error;
+  }
+}
+
 // Calcular racha actual
 export function calculateStreak(completions: { [date: string]: DayCompletions }): { current: number; dates: string[] } {
   const dates = Object.keys(completions).sort().reverse(); // Más reciente primero
@@ -424,13 +514,21 @@ export function calculateStreak(completions: { [date: string]: DayCompletions })
 
   let streak = 0;
   const streakDates: string[] = [];
-  const today = new Date().toISOString().split('T')[0];
+  
+  // Usar fecha local para evitar problemas de zona horaria
+  const now = new Date();
+  // Ajustar si es madrugada (antes de las 6 AM cuenta como día anterior)
+  if (now.getHours() < 6) {
+    now.setDate(now.getDate() - 1);
+  }
+  
+  const today = now.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD local
   
   // Buscar desde hoy hacia atrás
-  let currentDate = new Date(today);
+  let currentDate = new Date(now);
   
   for (let i = 0; i < 365; i++) { // Máximo un año hacia atrás
-    const dateStr = currentDate.toISOString().split('T')[0];
+    const dateStr = currentDate.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD local
     const dayData = completions[dateStr];
     
     // Si tiene al menos una rutina completada ese día, cuenta
@@ -438,9 +536,9 @@ export function calculateStreak(completions: { [date: string]: DayCompletions })
       streak++;
       streakDates.push(dateStr);
     } else {
-      // Si no encuentra datos para hoy o ayer, rompe la racha
-      if (i <= 1) {
-        // Permite 1 día de gracia (si hoy no has completado aún, cuenta desde ayer)
+      // Si no encuentra datos para hoy, permitimos que la racha continúe si ayer sí se hizo
+      // (Solo si estamos en la primera iteración, es decir, comprobando "hoy")
+      if (i === 0) {
         currentDate.setDate(currentDate.getDate() - 1);
         continue;
       }
