@@ -22,7 +22,7 @@
     "@astrojs/netlify": "^6.6.3",
     "@google/genai": "^1.28.0",
     "astro": "^5.16.6",
-    "firebase": "^12.5.0",
+    "firebase": "^12.7.0",
     "preact": "^10.27.2"
   },
   "devDependencies": {
