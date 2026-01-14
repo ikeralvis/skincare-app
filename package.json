@@ -23,7 +23,7 @@
     "@google/genai": "^1.28.0",
     "astro": "^5.16.6",
     "firebase": "^12.7.0",
-    "preact": "^10.27.2"
+    "preact": "^10.27.3"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
